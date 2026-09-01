@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>16tクレーン 吊上げ能力計算</title>
+<style>
+  :root{
+    --ink:#1b1a17;
+    --paper:#f2ede2;
+    --panel:#fffdf8;
+    --crane-yellow:#f0a71a;
+    --crane-yellow-deep:#c9840a;
+    --steel:#3a4048;
+    --steel-deep:#252a30;
+    --line:#d8cfb8;
+    --danger:#b3401f;
+    --safe:#2f6b4f;
+    --radius:14px;
+  }
+
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+  html,body{
+    margin:0;
+    padding:0;
+    background:var(--paper);
+    background-image:
+      repeating-linear-gradient(135deg, rgba(0,0,0,0.02) 0px, rgba(0,0,0,0.02) 2px, transparent 2px, transparent 14px);
+    color:var(--ink);
+    font-family:-apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100dvh;
+  }
+
+  .page{
+    max-width:520px;
+    margin:0 auto;
+    padding: max(18px, env(safe-area-inset-top)) 18px calc(env(safe-area-inset-bottom) + 24px);
+  }
+
+  /* Header: hazard-stripe band, like a crane boom placard */
+  .header{
+    background:var(--steel-deep);
+    border-radius:var(--radius);
+    padding:18px 18px 16px;
+    position:relative;
+    overflow:hidden;
+    box-shadow:0 6px 0 rgba(0,0,0,0.15);
+  }
+  .header::before{
+    content:"";
+    position:absolute;
+    left:0; right:0; top:0; height:8px;
+    background:repeating-linear-gradient(45deg,
+      var(--crane-yellow) 0 12px,
+      var(--steel-deep) 12px 24px);
+  }
+  .eyebrow{
+    color:var(--crane-yellow);
+    font-size:13px;
+    font-weight:700;
+    letter-spacing:0.02em;
+    margin:10px 0 4px;
+  }
+  h1{
+    color:#fff;
+    font-size:23px;
+    line-height:1.3;
+    margin:0 0 10px;
+    font-weight:800;
+  }
+  .cond-tag{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    background:rgba(240,167,26,0.12);
+    border:1px solid rgba(240,167,26,0.35);
+    color:var(--crane-yellow);
+    font-size:13px;
+    font-weight:600;
+    padding:6px 12px;
+    border-radius:999px;
+  }
+  .cond-tag svg{ width:14px; height:14px; flex:none; }
+
+  /* Input card */
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    margin-top:16px;
+    padding:18px;
+  }
+  .field{ margin-bottom:18px; }
+  .field:last-child{ margin-bottom:0; }
+  .field label{
+    display:block;
+    font-size:14px;
+    font-weight:700;
+    color:var(--steel-deep);
+    margin-bottom:8px;
+  }
+  .field .unit-hint{
+    font-weight:400;
+    color:#8a8272;
+    font-size:12.5px;
+    margin-left:4px;
+  }
+
+  .segmented{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:8px;
+  }
+  .segmented button{
+    appearance:none;
+    border:1.5px solid var(--line);
+    background:#fff;
+    color:var(--ink);
+    padding:10px 4px;
+    font-size:15px;
+    font-weight:700;
+    border-radius:10px;
+    font-family:inherit;
+  }
+  .segmented button.active{
+    background:var(--steel-deep);
+    border-color:var(--steel-deep);
+    color:#fff;
+  }
+  .segmented button:active{ transform:scale(0.97); }
+
+  .radius-row{
+    display:flex;
+    align-items:stretch;
+    gap:10px;
+  }
+  .stepper-btn{
+    appearance:none;
+    border:1.5px solid var(--line);
+    background:#fff;
+    width:48px;
+    border-radius:10px;
+    font-size:22px;
+    font-weight:700;
+    color:var(--steel-deep);
+    line-height:1;
+  }
+  .stepper-btn:active{ background:var(--paper); }
+
+  input[type="text"]{
+    flex:1;
+    min-width:0;
+    border:1.5px solid var(--line);
+    border-radius:10px;
+    font-size:22px;
+    font-weight:700;
+    text-align:center;
+    padding:10px 6px;
+    background:#fff;
+    color:var(--ink);
+    font-family:inherit;
+  }
+  input[type="text"]:focus{
+    outline:none;
+    border-color:var(--crane-yellow-deep);
+    box-shadow:0 0 0 3px rgba(240,167,26,0.2);
+  }
+
+  .calc-btn{
+    appearance:none;
+    width:100%;
+    margin-top:18px;
+    padding:16px;
+    font-size:18px;
+    font-weight:800;
+    letter-spacing:0.02em;
+    color:#221a05;
+    background:linear-gradient(180deg, var(--crane-yellow) 0%, var(--crane-yellow-deep) 100%);
+    border:none;
+    border-radius:12px;
+    box-shadow:0 4px 0 #8f5e05;
+    font-family:inherit;
+  }
+  .calc-btn:active{
+    transform:translateY(3px);
+    box-shadow:0 1px 0 #8f5e05;
+  }
+
+  /* Result */
+  .result-card{
+    margin-top:16px;
+    border-radius:var(--radius);
+    padding:20px 18px 18px;
+    background:var(--steel-deep);
+    color:#fff;
+    text-align:center;
+    position:relative;
+  }
+  .result-card .cap-label{
+    font-size:12.5px;
+    font-weight:700;
+    color:#b7bdc6;
+    letter-spacing:0.03em;
+    margin-bottom:6px;
+  }
+  .result-value{
+    font-size:46px;
+    font-weight:800;
+    font-variant-numeric:tabular-nums;
+    line-height:1.1;
+  }
+  .result-value .t{
+    font-size:20px;
+    font-weight:700;
+    margin-left:4px;
+    color:var(--crane-yellow);
+  }
+  .result-detail{
+    margin-top:10px;
+    font-size:13px;
+    color:#cfd3d8;
+    line-height:1.5;
+  }
+  .result-detail.warn{ color:#f3b26b; }
+  .result-card.state-empty{ background:#e7e0cd; color:#8a8272; }
+  .result-card.state-empty .result-value{ color:#8a8272; }
+  .result-card.state-error{ background:#3c211a; }
+  .result-card.state-error .result-value{ color:#ff8b6a; font-size:22px; }
+
+  .note{
+    margin-top:16px;
+    font-size:11.5px;
+    line-height:1.6;
+    color:#8a8272;
+    text-align:center;
+    padding:0 6px;
+  }
+
+  @media (max-width:360px){
+    .result-value{ font-size:38px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="eyebrow">RATED LIFTING CAPACITY</div>
+    <h1>16tクレーン 吊上げ能力計算</h1>
+    <span class="cond-tag">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 L22 20 L2 20 Z"/><path d="M12 9v5"/><circle cx="12" cy="17" r="0.6" fill="currentColor"/></svg>
+      アウトリガ 最大張出 5.2m・全周
+    </span>
+  </div>
+
+  <div class="card">
+    <div class="field">
+      <label>ブーム長 <span class="unit-hint">m</span></label>
+      <div class="segmented" id="boomSeg"></div>
+    </div>
+
+    <div class="field">
+      <label>作業半径 <span class="unit-hint">m</span></label>
+      <div class="radius-row">
+        <button class="stepper-btn" id="radiusMinus" type="button" aria-label="半径を減らす">−</button>
+        <input type="text" id="radiusInput" inputmode="decimal" pattern="[0-9.]*" value="8.0">
+        <button class="stepper-btn" id="radiusPlus" type="button" aria-label="半径を増やす">＋</button>
+      </div>
+    </div>
+
+    <button class="calc-btn" id="calcBtn" type="button">計 算</button>
+  </div>
+
+  <div class="result-card state-empty" id="resultCard">
+    <div class="cap-label">最大吊上げ能力</div>
+    <div class="result-value" id="resultValue">－</div>
+    <div class="result-detail" id="resultDetail">ブーム長と作業半径を入力して「計算」を押してください。</div>
+  </div>
+
+  <div class="note">
+    ※ 表の数値を表示する試作版です。実作業ではメーカーの最新性能表・取扱説明書等を必ず確認してください。
+  </div>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var BOOM_LENGTHS = [6.5, 10.7, 14.9, 19.2, 23.3, 27.5];
+
+  var DATA = {
+    2.5:  [16.00, 12.00, 9.00, 7.00, null, null],
+    3.0:  [16.00, 12.00, 9.00, 7.00, null, null],
+    3.5:  [14.00, 12.00, 9.00, 7.00, 5.00, 3.50],
+    4.0:  [12.50, 12.00, 9.00, 7.00, 5.00, 3.50],
+    4.5:  [11.50, 11.10, 9.00, 7.00, 5.00, 3.50],
+    5.0:  [null, 10.25, 8.90, 7.00, 5.00, 3.50],
+    5.5:  [null, 9.00, 8.20, 7.00, 5.00, 3.50],
+    6.0:  [null, 8.80, 7.60, 6.60, 5.00, 3.50],
+    7.0:  [null, 6.75, 6.40, 5.80, 4.70, 3.50],
+    8.0:  [null, 5.30, 5.00, 5.00, 4.15, 3.35],
+    9.0:  [null, 4.30, 4.00, 4.25, 3.70, 3.00],
+    10.0: [null, 3.70, 3.25, 3.50, 3.30, 2.75],
+    11.0: [null, null, 2.65, 2.95, 3.00, 2.50],
+    12.0: [null, null, 2.15, 2.45, 2.70, 2.30],
+    13.0: [null, null, 1.80, 2.05, 2.30, 2.10],
+    14.0: [null, null, null, 1.75, 2.00, 1.95],
+    15.0: [null, null, null, 1.45, 1.70, 1.75],
+    16.0: [null, null, null, 1.25, 1.45, 1.50],
+    17.0: [null, null, null, 1.05, 1.25, 1.30],
+    18.0: [null, null, null, null, 1.05, 1.10],
+    19.0: [null, null, null, null, 0.90, 0.95],
+    20.0: [null, null, null, null, 0.75, 0.80],
+    22.0: [null, null, null, null, 0.60, 0.60],
+    24.0: [null, null, null, null, 0.46, 0.45]
+  };
+
+  var RADII = Object.keys(DATA).map(Number).sort(function(a,b){return a-b;});
+
+  var selectedBoomIndex = 1; // default 10.7
+
+  var boomSeg = document.getElementById("boomSeg");
+  var radiusInput = document.getElementById("radiusInput");
+  var radiusMinus = document.getElementById("radiusMinus");
+  var radiusPlus = document.getElementById("radiusPlus");
+  var calcBtn = document.getElementById("calcBtn");
+  var resultCard = document.getElementById("resultCard");
+  var resultValue = document.getElementById("resultValue");
+  var resultDetail = document.getElementById("resultDetail");
+
+  BOOM_LENGTHS.forEach(function(len, idx){
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = len.toFixed(1);
+    if(idx === selectedBoomIndex) btn.classList.add("active");
+    btn.addEventListener("click", function(){
+      selectedBoomIndex = idx;
+      Array.prototype.forEach.call(boomSeg.children, function(c){ c.classList.remove("active"); });
+      btn.classList.add("active");
+      calculate();
+    });
+    boomSeg.appendChild(btn);
+  });
+
+  function nudgeRadius(delta){
+    var v = parseFloat(radiusInput.value);
+    if(isNaN(v)) v = 0;
+    v = Math.round((v + delta) * 10) / 10;
+    if(v < 0.1) v = 0.1;
+    radiusInput.value = v.toFixed(1);
+    calculate();
+  }
+  radiusMinus.addEventListener("click", function(){ nudgeRadius(-0.5); });
+  radiusPlus.addEventListener("click", function(){ nudgeRadius(0.5); });
+
+  function setState(state){
+    resultCard.classList.remove("state-empty", "state-error", "state-ok");
+    resultCard.classList.add(state);
+  }
+
+  function calculate(){
+    var raw = radiusInput.value.trim();
+    var radius = parseFloat(raw);
+
+    if(raw === "" || isNaN(radius) || radius <= 0){
+      setState("state-error");
+      resultValue.textContent = "入力エラー";
+      resultDetail.textContent = "作業半径を正しく入力してください。";
+      resultDetail.classList.remove("warn");
+      return;
+    }
+
+    var selectedRadius = null;
+    for(var i=0; i<RADII.length; i++){
+      if(RADII[i] >= radius){ selectedRadius = RADII[i]; break; }
+    }
+
+    if(selectedRadius === null){
+      setState("state-error");
+      resultValue.textContent = "表の範囲外";
+      resultDetail.textContent = "この性能表の最大作業半径を超えています。";
+      resultDetail.classList.remove("warn");
+      return;
+    }
+
+    var value = DATA[selectedRadius][selectedBoomIndex];
+    var boom = BOOM_LENGTHS[selectedBoomIndex];
+
+    if(value === null || value === undefined){
+      setState("state-error");
+      resultValue.textContent = "データなし";
+      resultDetail.textContent = "ブーム " + boom.toFixed(1) + "m・作業半径 " + selectedRadius.toFixed(1) + "m の表データがありません。";
+      resultDetail.classList.remove("warn");
+      return;
+    }
+
+    setState("state-ok");
+    resultValue.innerHTML = value.toFixed(2) + '<span class="t">t</span>';
+
+    if(Math.abs(selectedRadius - radius) > 0.001){
+      resultDetail.textContent = "入力半径 " + radius.toFixed(2) + "m → 性能表 " + selectedRadius.toFixed(1) + "m の値を表示（安全側）";
+      resultDetail.classList.add("warn");
+    } else {
+      resultDetail.textContent = "性能表の作業半径 " + selectedRadius.toFixed(1) + "m の値";
+      resultDetail.classList.remove("warn");
+    }
+  }
+
+  radiusInput.addEventListener("keydown", function(e){
+    if(e.key === "Enter"){ radiusInput.blur(); calculate(); }
+  });
+  radiusInput.addEventListener("blur", calculate);
+  calcBtn.addEventListener("click", calculate);
+
+  calculate();
+})();
+</script>
+</body>
+</html>
