@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>ニシオ能力計算表</title>
+<style>
+  :root{
+    --ink:#1b1a17;
+    --paper:#f2ede2;
+    --panel:#fffdf8;
+    --crane-yellow:#f0a71a;
+    --crane-yellow-deep:#c9840a;
+    --steel:#3a4048;
+    --steel-deep:#252a30;
+    --line:#d8cfb8;
+    --radius:14px;
+  }
+
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+  html,body{
+    margin:0;
+    padding:0;
+    background:var(--paper);
+    background-image:
+      repeating-linear-gradient(135deg, rgba(0,0,0,0.02) 0px, rgba(0,0,0,0.02) 2px, transparent 2px, transparent 14px);
+    color:var(--ink);
+    font-family:-apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100dvh;
+  }
+
+  .page{
+    max-width:520px;
+    margin:0 auto;
+    padding: max(12px, env(safe-area-inset-top)) 14px calc(env(safe-area-inset-bottom) + 14px);
+  }
+
+  /* Header */
+  .header{
+    background:var(--steel-deep);
+    border-radius:var(--radius);
+    padding:13px 16px 13px;
+    position:relative;
+    overflow:hidden;
+    box-shadow:0 5px 0 rgba(0,0,0,0.15);
+  }
+  .header::before{
+    content:"";
+    position:absolute;
+    left:0; right:0; top:0; height:7px;
+    background:repeating-linear-gradient(45deg,
+      var(--crane-yellow) 0 12px,
+      var(--steel-deep) 12px 24px);
+  }
+  .brand-line{
+    color:#cfd3d8;
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:0.08em;
+  }
+  .tonnage-row{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    margin-top:6px;
+  }
+  .tonnage-display{
+    display:flex;
+    align-items:baseline;
+    gap:2px;
+    line-height:1;
+  }
+  .tonnage-num{
+    font-size:42px;
+    font-weight:900;
+    color:var(--crane-yellow);
+    letter-spacing:-0.02em;
+    transition:color 0.15s ease;
+  }
+  .tonnage-unit{
+    font-size:18px;
+    font-weight:800;
+    color:var(--crane-yellow);
+    margin-left:2px;
+    transition:color 0.15s ease;
+  }
+  .tonnage-caption{
+    font-size:10.5px;
+    font-weight:700;
+    color:#9aa0a8;
+    margin-bottom:2px;
+  }
+  .eyebrow{
+    color:var(--crane-yellow);
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:0.02em;
+    margin:7px 0 2px;
+  }
+  h1{
+    color:#fff;
+    font-size:17px;
+    line-height:1.25;
+    margin:0 0 7px;
+    font-weight:800;
+  }
+  .cond-tag{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    background:rgba(240,167,26,0.12);
+    border:1px solid rgba(240,167,26,0.35);
+    color:var(--crane-yellow);
+    font-size:11px;
+    font-weight:600;
+    padding:4px 10px;
+    border-radius:999px;
+  }
+  .cond-tag svg{ width:13px; height:13px; flex:none; }
+
+  /* Crane tabs */
+  .crane-tabs{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:7px;
+    margin-top:10px;
+  }
+  .crane-tabs button{
+    appearance:none;
+    border:2px solid var(--accent, var(--line));
+    background:var(--panel);
+    color:var(--accent, var(--steel-deep));
+    padding:8px 4px 7px;
+    border-radius:11px;
+    font-family:inherit;
+    font-weight:800;
+    text-align:center;
+    position:relative;
+    transition:background 0.15s ease, color 0.15s ease;
+  }
+  .crane-tabs button .cap-num{
+    display:block;
+    font-size:18px;
+    line-height:1.1;
+    color:inherit;
+  }
+  .crane-tabs button .cap-unit{
+    display:block;
+    font-size:10px;
+    font-weight:700;
+    color:inherit;
+    opacity:0.75;
+    margin-top:1px;
+  }
+  .crane-tabs button.active{
+    background:var(--accent, var(--steel-deep));
+    border-color:var(--accent, var(--steel-deep));
+    color:#fff;
+    box-shadow:0 3px 0 rgba(0,0,0,0.18);
+  }
+  .crane-tabs button.active .cap-num{ color:#fff; }
+  .crane-tabs button.active .cap-unit{ color:#fff; opacity:0.85; }
+  .crane-tabs button:active{ transform:scale(0.98); }
+
+  /* Input card */
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    margin-top:10px;
+    padding:13px;
+  }
+  .field{ margin-bottom:11px; }
+  .field:last-child{ margin-bottom:0; }
+  .field label{
+    display:block;
+    font-size:12.5px;
+    font-weight:700;
+    color:var(--steel-deep);
+    margin-bottom:5px;
+  }
+  .field label.label-primary{
+    font-size:14px;
+    font-weight:900;
+    color:var(--ink);
+  }
+  .field .unit-hint{
+    font-weight:400;
+    color:#8a8272;
+    font-size:11.5px;
+    margin-left:4px;
+  }
+
+  .segmented{
+    display:grid;
+    grid-template-columns:repeat(var(--boom-count, 6), 1fr);
+    gap:5px;
+  }
+  .segmented button{
+    appearance:none;
+    border:1.5px solid var(--line);
+    background:#fff;
+    color:var(--ink);
+    padding:8px 2px;
+    font-size:12px;
+    font-weight:700;
+    border-radius:8px;
+    font-family:inherit;
+    min-width:0;
+    white-space:nowrap;
+  }
+  .segmented button.active{
+    background:var(--steel-deep);
+    border-color:var(--steel-deep);
+    color:#fff;
+  }
+  .segmented button:active{ transform:scale(0.97); }
+
+  .radius-row{
+    display:flex;
+    align-items:stretch;
+    gap:8px;
+  }
+  .stepper-btn{
+    appearance:none;
+    border:2px solid var(--line);
+    background:#fff;
+    width:44px;
+    border-radius:9px;
+    font-size:22px;
+    font-weight:800;
+    color:var(--steel-deep);
+    line-height:1;
+  }
+  .stepper-btn:active{ background:var(--paper); }
+
+  input[type="text"]{
+    flex:1;
+    min-width:0;
+    border:2px solid var(--line);
+    border-radius:9px;
+    font-size:32px;
+    font-weight:900;
+    text-align:center;
+    padding:7px 6px;
+    background:#fff;
+    color:var(--ink);
+    font-family:inherit;
+    letter-spacing:-0.01em;
+  }
+  input[type="text"]:focus{
+    outline:none;
+    border-color:var(--crane-yellow-deep);
+    box-shadow:0 0 0 3px rgba(240,167,26,0.2);
+  }
+
+  .calc-btn{
+    appearance:none;
+    width:100%;
+    margin-top:11px;
+    padding:11px;
+    font-size:16px;
+    font-weight:800;
+    letter-spacing:0.02em;
+    color:#221a05;
+    background:linear-gradient(180deg, var(--crane-yellow) 0%, var(--crane-yellow-deep) 100%);
+    border:none;
+    border-radius:11px;
+    box-shadow:0 3px 0 #8f5e05;
+    font-family:inherit;
+  }
+  .calc-btn:active{
+    transform:translateY(3px);
+    box-shadow:0 1px 0 #8f5e05;
+  }
+
+  /* Result */
+  .result-card{
+    margin-top:10px;
+    border-radius:var(--radius);
+    padding:13px 16px 13px;
+    background:var(--steel-deep);
+    color:#fff;
+    text-align:center;
+    position:relative;
+    border:3px solid var(--accent, var(--crane-yellow));
+    box-shadow:0 5px 0 rgba(0,0,0,0.12);
+  }
+  .result-card .cap-label{
+    font-size:12px;
+    font-weight:800;
+    color:#e3e6ea;
+    letter-spacing:0.04em;
+    margin-bottom:3px;
+  }
+  .result-value{
+    font-size:52px;
+    font-weight:900;
+    font-variant-numeric:tabular-nums;
+    line-height:1;
+    letter-spacing:-0.02em;
+    color:var(--accent, var(--crane-yellow));
+    text-shadow:0 2px 0 rgba(0,0,0,0.15);
+  }
+  .result-value .t{
+    font-size:22px;
+    font-weight:800;
+    margin-left:5px;
+    color:#fff;
+  }
+  .result-detail{
+    margin-top:6px;
+    font-size:12px;
+    color:#cfd3d8;
+    line-height:1.4;
+  }
+  .result-detail.warn{ color:#f3b26b; }
+  .result-card.state-empty{ background:#e7e0cd; color:#8a8272; border-color:#d8cfb8; }
+  .result-card.state-empty .result-value{ color:#8a8272; text-shadow:none; }
+  .result-card.state-error{ background:#3c211a; border-color:#7a3a2a; }
+  .result-card.state-error .result-value{ color:#ff8b6a; font-size:22px; text-shadow:none; }
+
+  .note{
+    margin-top:10px;
+    font-size:10px;
+    line-height:1.5;
+    color:#8a8272;
+    text-align:center;
+    padding:0 6px;
+  }
+
+  @media (max-width:360px){
+    .result-value{ font-size:42px; }
+    .segmented button{ font-size:10px; padding:7px 1px; }
+    .crane-tabs button .cap-num{ font-size:16px; }
+    input[type="text"]{ font-size:28px; }
+  }
+  @media (max-height:700px){
+    .tonnage-num{ font-size:34px; }
+    h1{ font-size:15px; }
+    .result-value{ font-size:42px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="brand-line">ニシオ能力計算表</div>
+    <div class="tonnage-row">
+      <div class="tonnage-display">
+        <span class="tonnage-num" id="tonnageNum">16</span><span class="tonnage-unit" id="tonnageUnit">t</span>
+      </div>
+    </div>
+    <div class="tonnage-caption">選択中のクレーン</div>
+    <div class="eyebrow">RATED LIFTING CAPACITY</div>
+    <h1 id="craneTitle">クレーン 吊上げ能力計算</h1>
+    <span class="cond-tag" id="condTag">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 L22 20 L2 20 Z"/><path d="M12 9v5"/><circle cx="12" cy="17" r="0.6" fill="currentColor"/></svg>
+      <span id="condTagText">アウトリガ 最大張出 5.2m・全周</span>
+    </span>
+
+    <div class="crane-tabs" id="craneTabs"></div>
+  </div>
+
+  <div class="card">
+    <div class="field">
+      <label>ブーム長 <span class="unit-hint">m</span></label>
+      <div class="segmented" id="boomSeg"></div>
+    </div>
+
+    <div class="field">
+      <label class="label-primary">作業半径 <span class="unit-hint">m</span></label>
+      <div class="radius-row">
+        <button class="stepper-btn" id="radiusMinus" type="button" aria-label="半径を減らす">−</button>
+        <input type="text" id="radiusInput" inputmode="decimal" pattern="[0-9.]*" value="8.0">
+        <button class="stepper-btn" id="radiusPlus" type="button" aria-label="半径を増やす">＋</button>
+      </div>
+    </div>
+
+    <button class="calc-btn" id="calcBtn" type="button">計 算</button>
+  </div>
+
+  <div class="result-card state-empty" id="resultCard">
+    <div class="cap-label">最大吊上げ能力</div>
+    <div class="result-value" id="resultValue">－</div>
+    <div class="result-detail" id="resultDetail">クレーンを選び、ブーム長と作業半径を入力して「計算」を押してください。</div>
+  </div>
+
+  <div class="note">
+    ※ 表の数値を表示する試作版です。実作業ではメーカーの最新性能表・取扱説明書等を必ず確認してください。表の段の境界付近では、実際の最大作業半径が表の刻み値より小さい場合があります（性能表の脚注を参照）。13tクレーンの性能表にある括弧内（GR-130N型の値）は本ツールでは省略しています。
+  </div>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var CRANES = {
+    "13": {
+      label: "13t",
+      title: "13tクレーン 吊上げ能力計算",
+      condition: "アウトリガ 最大張出 4.7m・全周（巻掛本数4本）",
+      accent: "#3f7ee8",
+      boomLengths: [5.5, 9.2, 12.9, 16.6, 20.3],
+      defaultBoomIndex: 1,
+      defaultRadius: "6.0",
+      data: {
+        1.0:  [13.0, 7.3, null, null, null],
+        1.5:  [13.0, 7.3, 7.3, null, null],
+        2.0:  [12.0, 7.3, 7.3, 5.5, null],
+        2.5:  [10.5, 7.3, 7.2, 5.5, null],
+        3.0:  [8.95, 7.3, 7.0, 5.5, 5.25],
+        3.5:  [7.55, 7.3, 6.65, 5.5, 5.0],
+        4.0:  [6.5, 6.35, 6.0, 5.5, 4.75],
+        4.5:  [null, 5.6, 5.45, 5.25, 4.5],
+        5.0:  [null, 5.0, 4.9, 4.85, 4.25],
+        5.5:  [null, 4.45, 4.35, 4.45, 4.0],
+        6.0:  [null, 4.0, 3.95, 4.0, 3.75],
+        7.0:  [null, 3.25, 3.2, 3.3, 3.2],
+        8.0:  [null, 2.85, 2.65, 2.8, 2.75],
+        9.0:  [null, null, 2.25, 2.4, 2.4],
+        10.0: [null, null, 1.9, 2.05, 2.05],
+        11.0: [null, null, 1.6, 1.7, 1.85],
+        12.0: [null, null, 1.5, 1.45, 1.55],
+        13.0: [null, null, null, 1.25, 1.35],
+        14.0: [null, null, null, 1.05, 1.15],
+        15.0: [null, null, null, 0.9, 1.0],
+        16.0: [null, null, null, null, 0.89],
+        17.0: [null, null, null, null, 0.77],
+        18.0: [null, null, null, null, 0.67],
+        19.0: [null, null, null, null, 0.61]
+      }
+    },
+    "16": {
+      label: "16t",
+      title: "16tクレーン 吊上げ能力計算",
+      condition: "アウトリガ 最大張出 5.2m・全周",
+      accent: "#f0a71a",
+      boomLengths: [6.5, 10.7, 14.9, 19.2, 23.3, 27.5],
+      defaultBoomIndex: 1,
+      defaultRadius: "8.0",
+      data: {
+        2.5:  [16.00, 12.00, 9.00, 7.00, null, null],
+        3.0:  [16.00, 12.00, 9.00, 7.00, null, null],
+        3.5:  [14.00, 12.00, 9.00, 7.00, 5.00, 3.50],
+        4.0:  [12.50, 12.00, 9.00, 7.00, 5.00, 3.50],
+        4.5:  [11.50, 11.10, 9.00, 7.00, 5.00, 3.50],
+        5.0:  [null, 10.25, 8.90, 7.00, 5.00, 3.50],
+        5.5:  [null, 9.00, 8.20, 7.00, 5.00, 3.50],
+        6.0:  [null, 8.80, 7.60, 6.60, 5.00, 3.50],
+        7.0:  [null, 6.75, 6.40, 5.80, 4.70, 3.50],
+        8.0:  [null, 5.30, 5.00, 5.00, 4.15, 3.35],
+        9.0:  [null, 4.30, 4.00, 4.25, 3.70, 3.00],
+        10.0: [null, 3.70, 3.25, 3.50, 3.30, 2.75],
+        11.0: [null, null, 2.65, 2.95, 3.00, 2.50],
+        12.0: [null, null, 2.15, 2.45, 2.70, 2.30],
+        13.0: [null, null, 1.80, 2.05, 2.30, 2.10],
+        14.0: [null, null, null, 1.75, 2.00, 1.95],
+        15.0: [null, null, null, 1.45, 1.70, 1.75],
+        16.0: [null, null, null, 1.25, 1.45, 1.50],
+        17.0: [null, null, null, 1.05, 1.25, 1.30],
+        18.0: [null, null, null, null, 1.05, 1.10],
+        19.0: [null, null, null, null, 0.90, 0.95],
+        20.0: [null, null, null, null, 0.75, 0.80],
+        22.0: [null, null, null, null, 0.60, 0.60],
+        24.0: [null, null, null, null, 0.46, 0.45]
+      }
+    },
+    "25": {
+      label: "25t",
+      title: "25tクレーン 吊上げ能力計算",
+      condition: "アウトリガ 最大張出 6.6m・全周(360°)",
+      accent: "#e2574c",
+      boomLengths: [9.35, 16.4, 23.45, 30.5],
+      defaultBoomIndex: 1,
+      defaultRadius: "10.0",
+      data: {
+        2.5:  [25.00, 18.00, 12.50, null],
+        3.0:  [25.00, 18.00, 12.50, null],
+        3.5:  [25.00, 18.00, 12.50, 8.00],
+        4.0:  [23.50, 18.00, 12.50, 8.00],
+        4.5:  [21.50, 18.00, 12.50, 8.00],
+        5.0:  [19.60, 18.00, 12.50, 8.00],
+        5.5:  [17.80, 17.00, 12.50, 8.00],
+        6.0:  [16.30, 16.00, 12.50, 8.00],
+        6.5:  [15.10, 15.00, 12.25, 8.00],
+        7.0:  [null, 14.00, 11.50, 8.00],
+        8.0:  [null, 11.40, 10.20, 8.00],
+        9.0:  [null, 9.30, 9.00, 8.00],
+        10.0: [null, 7.80, 7.60, 7.15],
+        11.0: [null, 6.50, 6.65, 6.40],
+        12.0: [null, 5.55, 5.80, 5.60],
+        13.0: [null, 4.75, 5.00, 4.90],
+        13.5: [null, 4.45, 4.65, 4.60],
+        14.0: [null, null, 4.35, 4.40],
+        15.0: [null, null, 3.85, 3.90],
+        16.0: [null, null, 3.40, 3.45],
+        17.0: [null, null, 3.00, 3.05],
+        18.0: [null, null, 2.65, 2.70],
+        19.0: [null, null, 2.35, 2.40],
+        20.0: [null, null, 2.10, 2.15],
+        20.5: [null, null, 2.00, 2.05],
+        21.0: [null, null, null, 1.95],
+        22.0: [null, null, null, 1.75],
+        24.0: [null, null, null, 1.40],
+        26.0: [null, null, null, 1.10],
+        27.9: [null, null, null, 0.90]
+      }
+    }
+  };
+
+  var CRANE_ORDER = ["13", "16", "25"];
+  var currentCrane = "16";
+  var boomIndexByCrane = {};
+  CRANE_ORDER.forEach(function(key){
+    boomIndexByCrane[key] = CRANES[key].boomLengths.length - 1;
+  });
+  var selectedBoomIndex = boomIndexByCrane[currentCrane];
+
+  var craneTabs = document.getElementById("craneTabs");
+  var boomSeg = document.getElementById("boomSeg");
+  var radiusInput = document.getElementById("radiusInput");
+  var radiusMinus = document.getElementById("radiusMinus");
+  var radiusPlus = document.getElementById("radiusPlus");
+  var calcBtn = document.getElementById("calcBtn");
+  var resultCard = document.getElementById("resultCard");
+  var resultValue = document.getElementById("resultValue");
+  var resultDetail = document.getElementById("resultDetail");
+  var craneTitle = document.getElementById("craneTitle");
+  var tonnageNum = document.getElementById("tonnageNum");
+  var tonnageUnit = document.getElementById("tonnageUnit");
+  var condTagText = document.getElementById("condTagText");
+
+  function buildCraneTabs(){
+    craneTabs.innerHTML = "";
+    CRANE_ORDER.forEach(function(key){
+      var c = CRANES[key];
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.style.setProperty("--accent", c.accent);
+      if(key === currentCrane) btn.classList.add("active");
+      btn.innerHTML = '<span class="cap-num">' + c.label + '</span><span class="cap-unit">吊り</span>';
+      btn.addEventListener("click", function(){
+        selectCrane(key);
+      });
+      craneTabs.appendChild(btn);
+    });
+  }
+
+  function buildBoomSeg(){
+    boomSeg.innerHTML = "";
+    var c = CRANES[currentCrane];
+    boomSeg.style.setProperty("--boom-count", c.boomLengths.length);
+    c.boomLengths.forEach(function(len, idx){
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = len.toFixed(len % 1 === 0 ? 1 : 2);
+      if(idx === selectedBoomIndex) btn.classList.add("active");
+      btn.addEventListener("click", function(){
+        selectedBoomIndex = idx;
+        boomIndexByCrane[currentCrane] = idx;
+        Array.prototype.forEach.call(boomSeg.children, function(el){ el.classList.remove("active"); });
+        btn.classList.add("active");
+        calculate();
+      });
+      boomSeg.appendChild(btn);
+    });
+  }
+
+  function selectCrane(key){
+    currentCrane = key;
+    var c = CRANES[key];
+    selectedBoomIndex = boomIndexByCrane[key];
+    if(!radiusInput.value.trim()){
+      radiusInput.value = c.defaultRadius;
+    }
+
+    craneTitle.textContent = c.title;
+    tonnageNum.textContent = c.label.replace("t", "");
+    tonnageNum.style.color = c.accent;
+    tonnageUnit.style.color = c.accent;
+    resultCard.style.setProperty("--accent", c.accent);
+    condTagText.textContent = c.condition;
+
+    Array.prototype.forEach.call(craneTabs.children, function(el, i){
+      el.classList.toggle("active", CRANE_ORDER[i] === key);
+    });
+
+    buildBoomSeg();
+    calculate();
+  }
+
+  function nudgeRadius(delta){
+    var v = parseFloat(radiusInput.value);
+    if(isNaN(v)) v = 0;
+    v = Math.round((v + delta) * 10) / 10;
+    if(v < 0.1) v = 0.1;
+    radiusInput.value = v.toFixed(1);
+    calculate();
+  }
+  radiusMinus.addEventListener("click", function(){ nudgeRadius(-0.5); });
+  radiusPlus.addEventListener("click", function(){ nudgeRadius(0.5); });
+
+  function setState(state){
+    resultCard.classList.remove("state-empty", "state-error", "state-ok");
+    resultCard.classList.add(state);
+  }
+
+  function calculate(){
+    var c = CRANES[currentCrane];
+    var raw = radiusInput.value.trim();
+    var radius = parseFloat(raw);
+
+    if(raw === "" || isNaN(radius) || radius <= 0){
+      setState("state-error");
+      resultValue.textContent = "入力エラー";
+      resultDetail.textContent = "作業半径を正しく入力してください。";
+      resultDetail.classList.remove("warn");
+      return;
+    }
+
+    var radii = Object.keys(c.data).map(Number).sort(function(a,b){return a-b;});
+    var selectedRadius = null;
+    for(var i=0; i<radii.length; i++){
+      if(radii[i] >= radius){ selectedRadius = radii[i]; break; }
+    }
+
+    if(selectedRadius === null){
+      setState("state-error");
+      resultValue.textContent = "表の範囲外";
+      resultDetail.textContent = "この性能表の最大作業半径を超えています。";
+      resultDetail.classList.remove("warn");
+      return;
+    }
+
+    var value = c.data[selectedRadius][selectedBoomIndex];
+    var boom = c.boomLengths[selectedBoomIndex];
+    var boomText = boom.toFixed(boom % 1 === 0 ? 1 : 2);
+
+    if(value === null || value === undefined){
+      setState("state-error");
+      resultValue.textContent = "データなし";
+      resultDetail.textContent = "ブーム " + boomText + "m・作業半径 " + selectedRadius.toFixed(1) + "m の表データがありません。";
+      resultDetail.classList.remove("warn");
+      return;
+    }
+
+    setState("state-ok");
+    resultValue.innerHTML = value.toFixed(2) + '<span class="t">t</span>';
+
+    if(Math.abs(selectedRadius - radius) > 0.001){
+      resultDetail.textContent = "入力半径 " + radius.toFixed(2) + "m → 性能表 " + selectedRadius.toFixed(1) + "m の値を表示（安全側）";
+      resultDetail.classList.add("warn");
+    } else {
+      resultDetail.textContent = "性能表の作業半径 " + selectedRadius.toFixed(1) + "m の値";
+      resultDetail.classList.remove("warn");
+    }
+  }
+
+  radiusInput.addEventListener("keydown", function(e){
+    if(e.key === "Enter"){ radiusInput.blur(); calculate(); }
+  });
+  radiusInput.addEventListener("blur", calculate);
+  calcBtn.addEventListener("click", calculate);
+
+  // init
+  buildCraneTabs();
+  selectCrane(currentCrane);
+})();
+</script>
+</body>
+</html>
