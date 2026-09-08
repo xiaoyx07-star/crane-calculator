@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>REP LOG</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+:root{
+  --bg: #17181A;
+  --bg-raised: #1F2124;
+  --line: #2C2F33;
+  --ink: #EDEAE3;
+  --ink-dim: #AEB1A9;
+  --push: #E15241;   /* 腕立て: 焼けた鉄の赤 */
+  --squat: #EBAE3E;  /* スクワット: 汗ばんだ琥珀 */
+  --situp: #5FA085;  /* 腹筋: 落ち着いた緑 */
+  --pull:  #7B7DF0;  /* 懸垂: 電光バイオレット */
+  --radius: 4px;
+}
+*{ box-sizing: border-box; margin:0; padding:0; -webkit-tap-highlight-color: transparent; }
+html,body{
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  overflow-x:hidden;
+}
+body{ padding-bottom: 28px; overflow-x:hidden; }
+
+.wrap{ max-width: 480px; margin: 0 auto; padding: 18px 16px 0; position:relative; }
+
+/* Header */
+.header{
+  display:flex; align-items:center; justify-content:space-between; margin-bottom: 14px;
+  position:relative; padding: 4px 0 10px; gap:10px;
+}
+.header::before{
+  content:''; position:absolute; top:-60px; left:-40%; width:180%; height:160px;
+  background: radial-gradient(closest-side, rgba(225,82,65,0.16), rgba(235,174,62,0.08) 55%, transparent 75%);
+  pointer-events:none; z-index:0;
+}
+.brand{ font-family:'Oswald'; font-weight:700; font-size: 16.5px; letter-spacing: 0.2px; position:relative; z-index:1; line-height:1.35; }
+.brand span{ color: var(--push); }
+.brand .app-title{ display:block; font-family:'Oswald'; font-weight:700; font-size: 16.5px; color: var(--squat); letter-spacing:0.2px; margin-top:2px; }
+.streak{ text-align:right; position:relative; z-index:1; }
+.streak-row{ display:flex; align-items:center; gap:5px; justify-content:flex-end; }
+.streak-flame{ font-size: 20px; filter: grayscale(1) opacity(0.4); transition: filter .3s ease; }
+.streak-flame.lit1{ filter: grayscale(0.3) opacity(0.75); }
+.streak-flame.lit2{ filter: grayscale(0) opacity(1); }
+.streak-flame.lit3{ filter: grayscale(0) opacity(1) drop-shadow(0 0 6px rgba(225,82,65,0.7)); }
+.streak-num{ font-family:'Oswald'; font-size: 25px; font-weight:600; line-height:1; }
+.streak-label{ font-size: 11px; color: var(--ink-dim); margin-top:3px; }
+
+/* Tabs */
+.tabs{ display:flex; gap: 4px; margin-bottom: 14px; border-bottom: 1px solid var(--line); }
+.tab{
+  flex:1; text-align:center; padding: 9px 0 10px; font-size: 13.5px; font-weight:600;
+  color: var(--ink-dim); cursor:pointer; border-bottom: 2px solid transparent; margin-bottom:-1px;
+  transition: color .15s ease, border-color .15s ease;
+}
+.tab.active{ color: var(--ink); border-bottom-color: var(--push); }
+
+.view{ display:none; }
+.view.active{ display:block; }
+
+/* --- 記録タブ --- */
+.date-row{ display:flex; align-items:center; gap:10px; margin-bottom: 10px; }
+.date-btn{
+  background: var(--bg-raised); border:1px solid var(--line); color: var(--ink);
+  width:34px; height:34px; border-radius: var(--radius); font-size:16px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.date-btn:active{ background: var(--line); }
+.date-label{ flex:1; text-align:center; font-family:'Oswald'; font-size:16px; font-weight:500; letter-spacing:0.3px; }
+.date-label.today::after{ content:'today'; display:block; font-family:'Inter'; font-size:10px; color: var(--ink-dim); text-transform:lowercase; letter-spacing:0.5px; margin-top:2px; }
+
+.hype-line{
+  text-align:center; font-size:12px; color: var(--ink-dim); margin-bottom:12px; min-height:14px;
+  transition: color .2s ease;
+}
+.hype-line b{ color: var(--ink); font-weight:600; }
+
+.exercise-grid{
+  display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;
+}
+.exercise{
+  background: var(--bg-raised); border:1px solid var(--line); border-top: 3px solid var(--ex-color, var(--push));
+  border-radius: var(--radius); padding: 9px 6px 10px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; text-align:center;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.exercise.bump{ transform: scale(1.015); box-shadow: 0 0 0 1px var(--ex-color), 0 4px 14px -6px var(--ex-color); }
+.exercise[data-ex="pushups"]{ --ex-color: var(--push); }
+.exercise[data-ex="squats"]{ --ex-color: var(--squat); }
+.exercise[data-ex="situps"]{ --ex-color: var(--situp); }
+.exercise[data-ex="pullups"]{ --ex-color: var(--pull); }
+.ex-name{ font-size: 11.5px; font-weight:600; line-height:1.25; }
+.ex-name small{ display:block; color: var(--ink-dim); font-size:9.5px; font-weight:500; margin-top:0; }
+.stepper{ display:flex; align-items:center; gap: 8px; }
+.step-btn{
+  width:24px; height:24px; border-radius:50%; border:1px solid var(--line); background: var(--bg);
+  color: var(--ink); font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  -webkit-tap-highlight-color: transparent; transition: transform .1s ease;
+}
+.step-btn:active{ background: var(--ex-color); border-color: var(--ex-color); color: var(--bg); transform: scale(0.92); }
+.step-val{ font-family:'Oswald'; font-size: 16px; font-weight:600; min-width: 20px; text-align:center; }
+.step-val.pop{ animation: pop .22s ease; }
+@keyframes pop{ 0%{ transform:scale(1); } 40%{ transform:scale(1.28); } 100%{ transform:scale(1); } }
+
+.save-btn{
+  width:100%; padding: 13px; margin-top: 8px;
+  background: linear-gradient(100deg, var(--push), var(--squat));
+  color:#17181A; border:none; position:relative; overflow:visible;
+  border-radius: var(--radius); font-family:'Inter'; font-weight:700; font-size:13.5px; letter-spacing:0.3px;
+  cursor:pointer;
+}
+.save-btn:active{ opacity:0.88; }
+.save-btn.saved{ background: linear-gradient(100deg, var(--situp), var(--pull)); color:#fff; }
+
+.recent{ margin-top: 10px; }
+.section-title{ font-size:12px; color: var(--ink-dim); margin-bottom:10px; font-weight:600; letter-spacing:0.3px; }
+.recent-row{
+  display:flex; align-items:center; justify-content:space-between; padding: 9px 0;
+  border-bottom: 1px solid var(--line); font-size: 13px;
+}
+.recent-row.best{ position:relative; }
+.recent-row.best .recent-date::before{ content:'★ '; color: var(--squat); }
+.recent-row:last-child{ border-bottom:none; }
+.recent-date{ color: var(--ink-dim); width: 78px; flex-shrink:0; }
+.recent-vals{ display:flex; gap: 12px; flex:1; justify-content:flex-end; }
+.recent-vals span{ min-width: 30px; text-align:right; font-weight:500; }
+.recent-empty{ color: var(--ink-dim); font-size:13px; padding: 12px 0; }
+
+/* --- 推移タブ --- */
+.summary-row{ display:flex; gap:10px; margin-bottom: 16px; }
+.summary-card{
+  flex:1; background: var(--bg-raised); border:1px solid var(--line); border-radius: var(--radius);
+  padding: 10px 8px; text-align:center;
+}
+.summary-card.pop-card{ border-color: rgba(235,174,62,0.4); }
+.summary-num{ font-family:'Oswald'; font-size:20px; font-weight:600; }
+.summary-label{ font-size:10px; color: var(--ink-dim); margin-top:3px; }
+
+.chip-row{ display:flex; gap:8px; margin-bottom: 16px; flex-wrap:wrap; }
+.chip{
+  padding: 6px 13px; border-radius: 20px; border:1px solid var(--line); background: transparent;
+  color: var(--ink-dim); font-size:12px; cursor:pointer; font-weight:600;
+}
+.chip.active[data-ex="pushups"]{ background: var(--push); border-color: var(--push); color:#17181A; }
+.chip.active[data-ex="squats"]{ background: var(--squat); border-color: var(--squat); color:#17181A; }
+.chip.active[data-ex="situps"]{ background: var(--situp); border-color: var(--situp); color:#17181A; }
+.chip.active[data-ex="pullups"]{ background: var(--pull); border-color: var(--pull); color:#17181A; }
+
+.chart-wrap{ background: var(--bg-raised); border:1px solid var(--line); border-radius: var(--radius); padding: 10px 8px 4px; margin-bottom:14px; }
+.chart-caption{ font-size:11.5px; color: var(--ink-dim); margin-top: 8px; text-align:center; font-weight:500; }
+.pb-badge{ font-size:11px; color: var(--squat); text-align:center; margin-top:4px; font-weight:700; }
+
+.empty-state{ text-align:center; padding: 50px 20px; color: var(--ink-dim); font-size:13px; line-height:1.7; }
+.empty-state b{ display:block; color: var(--ink); font-family:'Oswald'; font-size:16px; font-weight:500; margin-bottom:6px; }
+
+/* confetti */
+.confetti{
+  position:absolute; top:50%; left:50%; width:6px; height:6px; border-radius:1px;
+  pointer-events:none; z-index:5;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div class="brand">渡邉孝一<span class="app-title">筋力アップアプリ</span></div>
+    <div class="streak">
+      <div class="streak-row">
+        <span class="streak-flame" id="streakFlame">🔥</span>
+        <div class="streak-num" id="streakNum">–</div>
+      </div>
+      <div class="streak-label">days in a row</div>
+    </div>
+  </div>
+
+  <!-- 記録 -->
+  <div class="view active" id="view-log">
+    <div class="date-row">
+      <button class="date-btn" id="prevDay">‹</button>
+      <div class="date-label" id="dateLabel"></div>
+      <button class="date-btn" id="nextDay">›</button>
+    </div>
+    <div class="hype-line" id="hypeLine"></div>
+
+    <div class="exercise-grid">
+      <div class="exercise" data-ex="pushups">
+        <div class="ex-name">腕立て伏せ<small>push-ups</small></div>
+        <div class="stepper">
+          <button class="step-btn" data-ex="pushups" data-delta="-5">−</button>
+          <div class="step-val" id="val-pushups">0</div>
+          <button class="step-btn" data-ex="pushups" data-delta="5">+</button>
+        </div>
+      </div>
+
+      <div class="exercise" data-ex="squats">
+        <div class="ex-name">スクワット<small>squats</small></div>
+        <div class="stepper">
+          <button class="step-btn" data-ex="squats" data-delta="-5">−</button>
+          <div class="step-val" id="val-squats">0</div>
+          <button class="step-btn" data-ex="squats" data-delta="5">+</button>
+        </div>
+      </div>
+
+      <div class="exercise" data-ex="situps">
+        <div class="ex-name">腹筋<small>sit-ups</small></div>
+        <div class="stepper">
+          <button class="step-btn" data-ex="situps" data-delta="-5">−</button>
+          <div class="step-val" id="val-situps">0</div>
+          <button class="step-btn" data-ex="situps" data-delta="5">+</button>
+        </div>
+      </div>
+
+      <div class="exercise" data-ex="pullups">
+        <div class="ex-name">懸垂<small>pull-ups</small></div>
+        <div class="stepper">
+          <button class="step-btn" data-ex="pullups" data-delta="-1">−</button>
+          <div class="step-val" id="val-pullups">0</div>
+          <button class="step-btn" data-ex="pullups" data-delta="1">+</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="save-btn" id="saveBtn">この日の記録を保存</button>
+
+    <div class="recent">
+      <div class="section-title">直近の記録</div>
+      <div id="recentList"></div>
+    </div>
+  </div>
+
+  <!-- 推移 -->
+  <div class="view active" id="view-trend">
+    <div class="section-title" style="font-size:13px; margin-top:16px; margin-bottom:10px; padding-top:14px; border-top:1px solid var(--line); color:var(--ink);">📈 推移（過去3ヶ月）</div>
+    <div class="summary-row" id="summaryRow"></div>
+    <div class="chip-row">
+      <button class="chip active" data-ex="pushups">腕立て</button>
+      <button class="chip" data-ex="squats">スクワット</button>
+      <button class="chip" data-ex="situps">腹筋</button>
+      <button class="chip" data-ex="pullups">懸垂</button>
+    </div>
+    <div class="chart-wrap">
+      <svg id="chart" viewBox="0 0 440 150" style="width:100%; height:auto; display:block;"></svg>
+      <div class="chart-caption" id="chartCaption">過去3ヶ月・週ごとの合計回数</div>
+      <div class="pb-badge" id="pbBadge"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const EX_COLORS = { pushups: '#E15241', squats: '#EBAE3E', situps: '#5FA085', pullups: '#7B7DF0' };
+const EX_LABELS = { pushups: '腕立て', squats: 'スクワット', situps: '腹筋', pullups: '懸垂' };
+const EXS = ['pushups','squats','situps','pullups'];
+const STORAGE_KEY = 'workout-log-entries';
+
+let log = {}; // { 'YYYY-MM-DD': {pushups, squats, situps, pullups} }
+let currentDate = new Date();
+let currentTrendEx = 'pushups';
+let draft = { pushups: 0, squats: 0, situps: 0, pullups: 0 };
+
+function emptyEntry(){ return { pushups:0, squats:0, situps:0, pullups:0 }; }
+function entryTotal(e){ return (e.pushups||0)+(e.squats||0)+(e.situps||0)+(e.pullups||0); }
+
+function fmtDate(d){
+  const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function isToday(d){ return fmtDate(d) === fmtDate(new Date()); }
+function labelDate(d){
+  const days = ['日','月','火','水','木','金','土'];
+  return `${d.getMonth()+1}月${d.getDate()}日（${days[d.getDay()]}）`;
+}
+
+async function loadLog(){
+  let loaded = false;
+  try{
+    if(window.storage){
+      const res = await window.storage.get(STORAGE_KEY, false);
+      if(res && res.value){
+        log = JSON.parse(res.value);
+        loaded = true;
+      }
+    }
+  }catch(e){
+    console.warn('window.storageからの読み込みに失敗、localStorageを確認します', e);
+  }
+  if(!loaded){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      log = raw ? JSON.parse(raw) : {};
+    }catch(e2){
+      log = {};
+    }
+  }
+  Object.keys(log).forEach(k => { log[k] = { ...emptyEntry(), ...log[k] }; });
+}
+async function saveLog(){
+  let ok = false;
+  try{
+    if(window.storage){
+      await window.storage.set(STORAGE_KEY, JSON.stringify(log), false);
+      ok = true;
+    }
+  }catch(e){
+    console.warn('window.storageへの保存に失敗、localStorageに保存します', e);
+  }
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(log));
+    ok = true;
+  }catch(e2){
+    console.warn('localStorageへの保存にも失敗しました', e2);
+  }
+  if(!ok){
+    alert('保存に失敗しました。もう一度お試しください。');
+  }
+}
+
+function hypeMessage(total){
+  if(total === 0) return 'まだ0回。まずは1セットから始めよう';
+  if(total < 30) return `<b>${total}回</b> いいスタート、まだまだ伸ばせる`;
+  if(total < 80) return `<b>${total}回</b> 調子が出てきた、その勢いで`;
+  if(total < 150) return `<b>${total}回</b> かなり追い込めてる、いい日`;
+  return `<b>${total}回</b> 覚醒モード、自己ベスト級`;
+}
+
+function refreshDateView(){
+  const key = fmtDate(currentDate);
+  const entry = log[key] || emptyEntry();
+  draft = { ...entry };
+  EXS.forEach(ex => {
+    document.getElementById('val-'+ex).textContent = draft[ex];
+  });
+  const label = document.getElementById('dateLabel');
+  label.textContent = labelDate(currentDate);
+  label.classList.toggle('today', isToday(currentDate));
+  document.getElementById('nextDay').disabled = isToday(currentDate);
+  document.getElementById('nextDay').style.opacity = isToday(currentDate) ? '0.3' : '1';
+  const btn = document.getElementById('saveBtn');
+  btn.classList.remove('saved');
+  btn.textContent = 'この日の記録を保存';
+  document.getElementById('hypeLine').innerHTML = hypeMessage(entryTotal(draft));
+}
+
+function renderRecent(){
+  const list = document.getElementById('recentList');
+  const dates = Object.keys(log).sort().reverse().slice(0, 5);
+  if(dates.length === 0){
+    list.innerHTML = '<div class="recent-empty">まだ記録がありません。今日の分を記録してみましょう。</div>';
+    return;
+  }
+  const bestTotal = Math.max(...Object.values(log).map(entryTotal), 0);
+  list.innerHTML = dates.map(key => {
+    const e = log[key];
+    const d = new Date(key + 'T00:00:00');
+    const isBest = bestTotal > 0 && entryTotal(e) === bestTotal;
+    return `<div class="recent-row ${isBest ? 'best' : ''}">
+      <div class="recent-date">${d.getMonth()+1}/${d.getDate()}</div>
+      <div class="recent-vals">
+        <span style="color:${EX_COLORS.pushups}">${e.pushups}</span>
+        <span style="color:${EX_COLORS.squats}">${e.squats}</span>
+        <span style="color:${EX_COLORS.situps}">${e.situps}</span>
+        <span style="color:${EX_COLORS.pullups}">${e.pullups}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function computeStreak(){
+  let streak = 0;
+  let d = new Date();
+  if(!log[fmtDate(d)] || entryTotal(log[fmtDate(d)]) === 0){
+    d.setDate(d.getDate()-1);
+  }
+  while(true){
+    const key = fmtDate(d);
+    const e = log[key];
+    if(e && entryTotal(e) > 0){
+      streak++;
+      d.setDate(d.getDate()-1);
+    } else break;
+  }
+  document.getElementById('streakNum').textContent = streak;
+  const flame = document.getElementById('streakFlame');
+  flame.className = 'streak-flame';
+  if(streak >= 7) flame.classList.add('lit3');
+  else if(streak >= 3) flame.classList.add('lit2');
+  else if(streak >= 1) flame.classList.add('lit1');
+}
+
+function renderSummary(){
+  const now = new Date();
+  const start90 = new Date(); start90.setDate(now.getDate()-89);
+  let totals = emptyEntry();
+  let daysLogged = 0;
+  Object.keys(log).forEach(key => {
+    const d = new Date(key + 'T00:00:00');
+    if(d >= start90 && d <= now){
+      const e = log[key];
+      if(entryTotal(e) > 0) daysLogged++;
+      EXS.forEach(ex => totals[ex] += e[ex]);
+    }
+  });
+  const grand = EXS.reduce((s,ex)=>s+totals[ex],0);
+  const row = document.getElementById('summaryRow');
+  row.innerHTML = `
+    <div class="summary-card"><div class="summary-num">${daysLogged}</div><div class="summary-label">記録した日数</div></div>
+    <div class="summary-card pop-card"><div class="summary-num">${grand}</div><div class="summary-label">合計回数</div></div>
+    <div class="summary-card"><div class="summary-num">${daysLogged ? Math.round(grand/daysLogged) : 0}</div><div class="summary-label">1日の平均</div></div>
+  `;
+}
+
+function weeklyBuckets(ex, weeks=13){
+  const now = new Date();
+  const buckets = [];
+  for(let i=weeks-1; i>=0; i--){
+    const end = new Date(now); end.setDate(now.getDate() - i*7);
+    const start = new Date(end); start.setDate(end.getDate()-6);
+    let total = 0;
+    Object.keys(log).forEach(key => {
+      const d = new Date(key + 'T00:00:00');
+      if(d >= start && d <= end) total += (log[key][ex]||0);
+    });
+    buckets.push({ start, end, total });
+  }
+  return buckets;
+}
+
+function renderChart(){
+  const buckets = weeklyBuckets(currentTrendEx, 13);
+  const svg = document.getElementById('chart');
+  const w = 440, h = 150, padBottom = 22, padTop = 8;
+  const max = Math.max(...buckets.map(b=>b.total), 1);
+  const barW = (w / buckets.length) * 0.6;
+  const gap = (w / buckets.length);
+  const color = EX_COLORS[currentTrendEx];
+  const gradId = 'grad-' + currentTrendEx;
+
+  const isCurrentPB = buckets[buckets.length-1].total === max && max > 0;
+
+  let defs = `<defs><linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="${color}" stop-opacity="1"/>
+    <stop offset="100%" stop-color="${color}" stop-opacity="0.45"/>
+  </linearGradient></defs>`;
+
+  let bars = defs;
+  buckets.forEach((b, i) => {
+    const barH = (b.total / max) * (h - padBottom - padTop);
+    const x = i * gap + (gap - barW)/2;
+    const y = h - padBottom - barH;
+    const isLast = i === buckets.length-1;
+    const glow = isLast ? `filter="drop-shadow(0 0 4px ${color})"` : '';
+    bars += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(barH,1).toFixed(1)}" rx="2" fill="url(#${gradId})" opacity="${isLast ? 1 : 0.7}" ${glow}/>`;
+    if(i % 4 === 0 || isLast){
+      bars += `<text x="${(x+barW/2).toFixed(1)}" y="${h-8}" font-size="9" fill="#93968F" text-anchor="middle" font-family="Inter">${b.end.getMonth()+1}/${b.end.getDate()}</text>`;
+    }
+  });
+  bars += `<line x1="0" y1="${h-padBottom}" x2="${w}" y2="${h-padBottom}" stroke="#2C2F33" stroke-width="1"/>`;
+  svg.innerHTML = bars;
+  document.getElementById('chartCaption').textContent = `${EX_LABELS[currentTrendEx]}・週ごとの合計回数（過去13週）`;
+  document.getElementById('pbBadge').textContent = isCurrentPB ? `🏆 今週が${EX_LABELS[currentTrendEx]}の自己ベスト週！` : '';
+}
+
+function renderAll(){
+  refreshDateView();
+  renderRecent();
+  computeStreak();
+  renderSummary();
+  renderChart();
+}
+
+// --- イベント ---
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('view-' + tab.dataset.view).classList.add('active');
+  });
+});
+
+document.querySelectorAll('.step-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const ex = btn.dataset.ex;
+    const delta = parseInt(btn.dataset.delta, 10);
+    draft[ex] = Math.max(0, draft[ex] + delta);
+    const valEl = document.getElementById('val-'+ex);
+    valEl.textContent = draft[ex];
+    valEl.classList.remove('pop'); void valEl.offsetWidth; valEl.classList.add('pop');
+    const card = document.querySelector(`.exercise[data-ex="${ex}"]`);
+    card.classList.remove('bump'); void card.offsetWidth; card.classList.add('bump');
+    setTimeout(()=>card.classList.remove('bump'), 200);
+    document.getElementById('hypeLine').innerHTML = hypeMessage(entryTotal(draft));
+  });
+});
+
+document.getElementById('prevDay').addEventListener('click', () => {
+  currentDate.setDate(currentDate.getDate()-1);
+  refreshDateView();
+});
+document.getElementById('nextDay').addEventListener('click', () => {
+  if(isToday(currentDate)) return;
+  currentDate.setDate(currentDate.getDate()+1);
+  refreshDateView();
+});
+
+function burstConfetti(btn){
+  const colors = [EX_COLORS.pushups, EX_COLORS.squats, EX_COLORS.situps, EX_COLORS.pullups];
+  const rect = btn.getBoundingClientRect();
+  for(let i=0; i<14; i++){
+    const p = document.createElement('div');
+    p.className = 'confetti';
+    p.style.background = colors[i % colors.length];
+    p.style.position = 'fixed';
+    p.style.left = (rect.left + rect.width/2) + 'px';
+    p.style.top = (rect.top + rect.height/2) + 'px';
+    document.body.appendChild(p);
+    const angle = (Math.PI * 2 * i) / 14 + Math.random()*0.5;
+    const dist = 60 + Math.random()*50;
+    const dx = Math.cos(angle) * dist;
+    const dy = Math.sin(angle) * dist - 20;
+    p.animate([
+      { transform: 'translate(0,0) rotate(0deg)', opacity: 1 },
+      { transform: `translate(${dx}px, ${dy}px) rotate(${Math.random()*360}deg)`, opacity: 0 }
+    ], { duration: 650 + Math.random()*250, easing: 'cubic-bezier(.2,.7,.3,1)' });
+    setTimeout(()=>p.remove(), 950);
+  }
+}
+
+document.getElementById('saveBtn').addEventListener('click', async (e) => {
+  const key = fmtDate(currentDate);
+  log[key] = { ...draft };
+  await saveLog();
+  const btn = document.getElementById('saveBtn');
+  btn.textContent = '保存しました ✓ よくやった';
+  btn.classList.add('saved');
+  burstConfetti(btn);
+  renderRecent();
+  computeStreak();
+  renderSummary();
+  renderChart();
+});
+
+document.querySelectorAll('.chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+    chip.classList.add('active');
+    currentTrendEx = chip.dataset.ex;
+    renderChart();
+  });
+});
+
+(async function init(){
+  await loadLog();
+  renderAll();
+})();
+</script>
+</body>
+</html>
