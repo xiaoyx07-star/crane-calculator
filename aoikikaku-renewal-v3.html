@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>あおい企画｜福岡・佐賀・熊本の外壁塗装・屋根塗装専門店</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1B2A38;
+    --paper:#FAF6F0;
+    --persimmon:#C1502E;
+    --sage:#6B7F5B;
+    --charcoal:#2B2620;
+    --sand:#E8DFCE;
+    --sand-line: rgba(43,38,32,0.14);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{background:var(--paper);color:var(--charcoal);font-family:'Zen Kaku Gothic New', sans-serif;line-height:1.85;-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+  h1,h2,h3,.brand{font-family:'Shippori Mincho', serif;}
+  a{color:inherit;text-decoration:none;}
+  img{max-width:100%;display:block;}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 28px;}
+
+  @keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+  .reveal{animation:fadeUp .8s ease both;}
+
+
+  header{position:fixed;top:0;left:0;right:0;z-index:50;background:rgba(250,246,240,0.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--sand-line);}
+  .nav{display:flex;align-items:center;justify-content:space-between;padding:12px 28px;max-width:1120px;margin:0 auto;}
+  .brand{display:flex;align-items:center;gap:10px;font-size:1.15rem;font-weight:700;color:var(--ink);letter-spacing:.03em;}
+  .brand img{height:36px;width:auto;}
+  .navlinks{display:flex;gap:32px;font-size:.92rem;}
+  .navlinks a{position:relative;padding-bottom:4px;}
+  .navlinks a::after{content:"";position:absolute;left:0;bottom:0;width:0;height:1px;background:var(--persimmon);transition:width .3s ease;}
+  .navlinks a:hover::after{width:100%;}
+  .navtel{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--persimmon);white-space:nowrap;font-size:.92rem;}
+  @media(max-width:820px){.navlinks{display:none;}}
+  @media(max-width:680px){.nav{padding:10px 20px;}.brand{font-size:1rem;}.brand img{height:30px;}.navtel{font-size:.8rem;}}
+
+  .hero{padding:0;position:relative;color:#fff;}
+  .hero-bg{position:relative;min-height:560px;display:flex;align-items:flex-end;overflow:hidden;}
+  .hero-bg .base{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:brightness(.55);}
+  .hero-bg .slide{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:brightness(.55);opacity:0;transition:opacity 1.5s ease;}
+  .hero-bg .slide.active{opacity:1;}
+  .hero-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(27,42,56,.9) 0%,rgba(27,42,56,.15) 65%);}
+  .hero-inner{position:relative;z-index:2;padding:220px 28px 70px;max-width:1120px;margin:0 auto;width:100%;}
+  .hero-eyebrow{color:#e9d3c6;font-size:.95rem;font-weight:500;margin-bottom:18px;}
+  .hero h1{font-size:clamp(2rem,4.6vw,3.4rem);font-weight:700;line-height:1.55;margin-bottom:26px;}
+  .hero p{max-width:46ch;color:#e7e2d6;margin-bottom:34px;}
+  .cta-row{display:flex;gap:14px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:14px 26px;border-radius:2px;font-weight:700;font-size:.95rem;transition:transform .25s ease, background .25s ease;}
+  .btn-primary{background:var(--persimmon);color:#fff;}
+  .btn-primary:hover{transform:translateY(-2px);background:#a8451f;}
+  .btn-ghost{border:1px solid #fff;color:#fff;}
+  .btn-ghost:hover{background:#fff;color:var(--ink);}
+  @media(max-width:600px){.hero-inner{padding:150px 20px 50px;}.hero-bg{min-height:460px;}.cta-row{flex-direction:column;align-items:stretch;}.btn{justify-content:center;}}
+
+  /* before/after - always animating, real photos */
+  .ba-section{padding:90px 0;}
+  .ba-grid{display:grid;grid-template-columns:1fr 1.1fr;gap:56px;align-items:center;}
+  @media(max-width:820px){.ba-grid{grid-template-columns:1fr;gap:36px;}}
+  .house-card{position:relative;border-radius:3px;overflow:hidden;background:#EDE7D8;box-shadow:0 24px 50px -20px rgba(27,42,56,0.35);aspect-ratio:4/3.2;}
+  .house-card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  .house-after{clip-path:inset(0 100% 0 0);transition:clip-path 1.4s ease-in-out;}
+  .ba-handle{position:absolute;top:0;bottom:0;width:3px;background:#fff;z-index:2;box-shadow:0 0 0 1px rgba(0,0,0,0.15);left:0%;transition:left 1.4s ease-in-out;}
+  .ba-label{position:absolute;top:14px;padding:5px 12px;font-size:.72rem;font-weight:700;background:rgba(27,42,56,0.78);color:#fff;letter-spacing:.05em;border-radius:2px;z-index:3;}
+  .ba-label.before{left:14px;}
+  .ba-label.after{right:14px;}
+  .price-tag{display:inline-block;margin-top:20px;color:var(--persimmon);font-weight:700;font-size:1.6rem;}
+  .price-tag small{font-size:.85rem;color:#6b6357;font-weight:500;}
+
+  section{padding:96px 0;}
+  .section-head{max-width:640px;margin-bottom:56px;}
+  @media(max-width:600px){section{padding:56px 0;}.section-head{margin-bottom:34px;}}
+  .kicker{color:var(--sage);font-size:.9rem;font-weight:500;margin-bottom:10px;}
+  .section-head h2{font-size:clamp(1.6rem,3vw,2.2rem);color:var(--ink);font-weight:700;line-height:1.6;}
+
+  .reasons{border-top:1px solid var(--sand-line);}
+  .reason{display:grid;grid-template-columns:220px 1fr;gap:36px;padding:36px 0;border-bottom:1px solid var(--sand-line);align-items:start;}
+  .reason:last-child{border-bottom:none;}
+  .reason .num{font-family:'Shippori Mincho',serif;font-size:2.6rem;color:var(--sand);font-weight:700;}
+  .reason h3{font-size:1.2rem;color:var(--ink);margin-bottom:12px;font-weight:700;}
+  @media(max-width:600px){.reason{grid-template-columns:1fr;gap:12px;padding:26px 0;}.reason .num{font-size:1.8rem;}}
+
+  .services{background:var(--ink);color:#f1ede4;}
+  .services .section-head h2{color:#fff;}
+  .services .kicker{color:#e0b19f;}
+  .chip-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:rgba(255,255,255,0.12);}
+  .chip{position:relative;min-height:230px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;padding:24px;}
+  .chip img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .6s ease;}
+  .chip:hover img{transform:scale(1.08);}
+  .chip::after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(15,20,26,.88) 15%,rgba(15,20,26,.15) 70%);}
+  .chip h3,.chip p{position:relative;z-index:2;}
+  .chip h3{font-size:1.05rem;font-weight:700;margin-bottom:6px;color:#fff;}
+  .chip p{font-size:.82rem;color:#d8d2c3;}
+  @media(max-width:760px){.chip-grid{grid-template-columns:1fr 1fr;}}
+  @media(max-width:480px){.chip-grid{grid-template-columns:1fr;}}
+
+  .timeline{position:relative;}
+  .tgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;}
+  @media(max-width:820px){.tgrid{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:480px){.tgrid{grid-template-columns:1fr;}}
+  .tstep{position:relative;border-radius:3px;overflow:hidden;opacity:0;animation:fadeUp .6s ease forwards;background:#fff;border:1px solid var(--sand-line);}
+  .tstep:nth-child(1){animation-delay:.05s;}.tstep:nth-child(2){animation-delay:.15s;}.tstep:nth-child(3){animation-delay:.25s;}.tstep:nth-child(4){animation-delay:.35s;}
+  .tstep:nth-child(5){animation-delay:.45s;}.tstep:nth-child(6){animation-delay:.55s;}.tstep:nth-child(7){animation-delay:.65s;}.tstep:nth-child(8){animation-delay:.75s;}
+  .tstep .thumb{aspect-ratio:4/3;overflow:hidden;position:relative;}
+  .tstep .thumb img{width:100%;height:100%;object-fit:cover;}
+  .tstep .stepno{position:absolute;top:8px;left:8px;background:var(--persimmon);color:#fff;font-size:.72rem;font-weight:700;padding:3px 9px;border-radius:2px;z-index:2;}
+  .tstep .txt{padding:14px 14px 16px;font-size:.86rem;color:var(--ink);font-weight:700;line-height:1.6;}
+
+  .areas{background:var(--sand);}
+  .area-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:36px;}
+  .area-card h3{color:var(--ink);font-weight:700;margin-bottom:12px;font-size:1.05rem;border-bottom:2px solid var(--persimmon);display:inline-block;padding-bottom:4px;}
+  .area-card p{font-size:.86rem;color:#544d42;line-height:2;}
+  @media(max-width:760px){.area-grid{grid-template-columns:1fr;gap:28px;}}
+
+  .reform-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;}
+  .reform-card{position:relative;border-radius:3px;overflow:hidden;aspect-ratio:4/3;}
+  .reform-card img{width:100%;height:100%;object-fit:cover;transition:transform .6s ease;}
+  .reform-card:hover img{transform:scale(1.06);}
+  .reform-card .cap{position:absolute;left:0;right:0;bottom:0;padding:16px;color:#fff;font-weight:700;background:linear-gradient(0deg,rgba(15,20,26,.85),transparent);}
+  @media(max-width:760px){.reform-grid{grid-template-columns:1fr;}}
+
+  .insta{background:var(--ink);color:#fff;text-align:center;}
+  .insta a{display:inline-block;margin-top:16px;color:#e0b19f;font-weight:700;border-bottom:1px solid #e0b19f;padding-bottom:2px;}
+
+  footer{background:var(--ink);color:#e7e2d6;padding:80px 0 30px;}
+  .foot-grid{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:40px;margin-bottom:50px;align-items:start;}
+  .foot-logo{height:64px;width:auto;margin-bottom:16px;filter:brightness(0) invert(1);opacity:.95;}
+  .foot-col h4{font-size:.85rem;color:#a39a86;margin-bottom:14px;letter-spacing:.04em;}
+  .foot-col a, .foot-col p{display:block;font-size:.9rem;color:#e7e2d6;margin-bottom:10px;}
+  .foot-tel{font-size:1.6rem;font-weight:700;color:#fff;}
+  .foot-bottom{border-top:1px solid rgba(255,255,255,0.12);padding-top:26px;font-size:.78rem;color:#a39a86;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+  @media(max-width:760px){.foot-grid{grid-template-columns:1fr;gap:32px;}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="nav">
+    <a class="brand" href="#top"><img src="https://aoikikaku-paint.com/wp-content/uploads/2024/12/logo-14.png" alt="あおい企画" referrerpolicy="no-referrer">あおい企画</a>
+    <nav class="navlinks">
+      <a href="#reasons">選ばれる理由</a>
+      <a href="#services">業務内容</a>
+      <a href="#process">施工の流れ</a>
+      <a href="#areas">対応エリア</a>
+      <a href="#contact">お問い合わせ</a>
+    </nav>
+    <a class="navtel" href="tel:07065949268">070-6594-9268</a>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="hero-bg" id="heroSlides">
+      <img class="base" src="https://aoikikaku-paint.com/wp-content/uploads/2024/12/22094590_m.jpg" alt="外壁塗装の様子" referrerpolicy="no-referrer">
+      <img class="slide" src="https://aoikikaku-paint.com/wp-content/uploads/2024/12/30607782_s.jpg" alt="施工の様子" referrerpolicy="no-referrer">
+      <img class="slide" src="https://aoikikaku-paint.com/wp-content/uploads/2024/12/3276467_s.jpg" alt="施工の様子" referrerpolicy="no-referrer">
+      <img class="slide" src="https://aoikikaku-paint.com/wp-content/uploads/2024/12/27062691_s.jpg" alt="屋根塗装の様子" referrerpolicy="no-referrer">
+      <div class="hero-inner">
+        <div class="hero-eyebrow reveal">福岡・佐賀・熊本　塗装工事の専門店</div>
+        <h1 class="reveal">塗装・補修・屋根工事の<br>トータルサポート</h1>
+        <p class="reveal">中間マージンのない直施工だから、確かな品質を適正価格で。外壁塗装・屋根塗装・補修工事まで、久留米のあおい企画がまるごとサポートします。</p>
+        <div class="cta-row reveal">
+          <a class="btn btn-primary" href="tel:07065949268">今すぐ電話で相談する</a>
+          <a class="btn btn-ghost" href="#contact">無料見積もりを依頼</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="ba-section" id="reasons">
+    <div class="wrap ba-grid">
+      <div>
+        <div class="kicker reveal">Why Aoi Kikaku</div>
+        <h2 class="reveal" style="font-size:clamp(1.6rem,3vw,2.2rem);color:var(--ink);font-weight:700;line-height:1.6;margin-bottom:18px;">中間マージンなし。<br>施工費のみで断然お得。</h2>
+        <p class="reveal" style="color:#4a443c;max-width:44ch;">ハウスメーカーやリフォーム店を通さず直接施工するから、余計な中間マージンが発生しません。外壁塗装を誰でも手軽に頼める価格を実現しています。</p>
+        <div class="price-tag reveal">350,000円〜 <small>／外壁塗装</small></div>
+      </div>
+      <div class="reveal">
+        <div class="house-card" id="baCard">
+          <span class="ba-label before">BEFORE</span>
+          <span class="ba-label after">AFTER</span>
+          <img src="https://aoikikaku-paint.com/wp-content/uploads/2024/12/%E3%83%93%E3%83%95%E3%82%A9%E3%83%BC-1024x771.jpg" alt="施工前の外壁" referrerpolicy="no-referrer" loading="eager">
+          <img class="house-after" id="baAfter" src="https://aoikikaku-paint.com/wp-content/uploads/2024/12/%E3%82%A2%E3%83%95%E3%82%BF%E3%83%BC-e1734929306465-853x1024.jpg" alt="施工後の外壁" referrerpolicy="no-referrer" loading="eager">
+          <div class="ba-handle" id="baHandle"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="reason reveal">
+        <div class="num">02</div>
+        <div>
+          <h3>お客様満足度に自信</h3>
+          <p style="color:#4a443c;">数多くの施工実績がありますが、1件1件のお客様との出会いを大切に、親切・丁寧な対応を徹底しているからこそ、厚い信頼をいただいています。</p>
+        </div>
+      </div>
+      <div class="reason reveal">
+        <div class="num">03</div>
+        <div>
+          <h3>親切かつ柔軟な対応力</h3>
+          <p style="color:#4a443c;">お伺いした営業担当者が最初から最後まで一貫して工事まで担当するので、細かなご要望にも柔軟にお応えできます。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="services" id="services">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <div class="kicker">Service</div>
+        <h2>業務内容</h2>
+      </div>
+    </div>
+    <div class="chip-grid">
+      <div class="chip"><img src="https://aoikikaku-paint.com/wp-content/uploads/2024/12/27062691_s.jpg" alt="屋根塗装" referrerpolicy="no-referrer"><h3>屋根塗装</h3><p>定期的な屋根塗装で住まいを健康に保ちます。</p></div>
+      <div class="chip"><img src="https://aoikikaku-paint.com/wp-content/uploads/2024/12/30294442_s-e1734931571444.jpg" alt="外壁塗装" referrerpolicy="no-referrer"><h3>外壁塗装</h3><p>太陽光・雨・排気ガスから建物を守ります。</p></div>
+      <div class="chip"><img src="https://aoikikaku-paint.com/wp-content/uploads/2024/12/4819041_s-e1734931789569.jpg" alt="仮設足場設置" referrerpolicy="no-referrer"><h3>仮設足場設置</h3><p>安全第一、厳しい安全管理を徹底します。</p></div>
+      <div class="chip"><img src="https://aoikikaku-paint.com/wp-content/uploads/2024/12/4588792_s-e1734931833821.jpg" alt="屋根工事" referrerpolicy="no-referrer"><h3>屋根工事</h3><p>塗装から修理・リフォームまで幅広く対応。</p></div>
+      <div class="chip"><img src="https://aoikikaku-paint.com/wp-content/uploads/2024/12/31221918_s-e1734931933634.jpg" alt="外壁ヒビ割れ補修" referrerpolicy="no-referrer"><h3>外壁ヒビ割れ補修</h3><p>ヒビ割れ補修は3,300円から対応可能です。</p></div>
+      <div class="chip" style="align-items:center;justify-content:center;"><h3 style="text-align:center;"><a href="https://aoikikaku-paint.com/price/" style="color:#fff;">料金表を見る →</a></h3></div>
+    </div>
+  </section>
+
+  <section id="process">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <div class="kicker">Flow</div>
+        <h2>施工の流れ</h2>
+      </div>
+      <div class="timeline">
+        <div class="tgrid">
+          <div class="tstep"><div class="thumb"><span class="stepno">STEP1</span><img src="https://aoikikaku-paint.com/wp-content/uploads/2024/12/24977787_s.jpg" referrerpolicy="no-referrer" alt=""></div><div class="txt">お問合わせ・建物診断・報告書作成・お見積書提出</div></div>
+          <div class="tstep"><div class="thumb"><span class="stepno">STEP2</span><img src="https://aoikikaku-paint.com/wp-content/uploads/2024/12/23639243_s-e1734932246809.jpg" referrerpolicy="no-referrer" alt=""></div><div class="txt">ご契約・工事日程・塗装色決め</div></div>
+          <div class="tstep"><div class="thumb"><span class="stepno">STEP3</span><img src="https://aoikikaku-paint.com/wp-content/uploads/2024/12/31089174_s.jpg" referrerpolicy="no-referrer" alt=""></div><div class="txt">近隣挨拶・足場仮設・高圧洗浄</div></div>
+          <div class="tstep"><div class="thumb"><span class="stepno">STEP4</span><img src="https://aoikikaku-paint.com/wp-content/uploads/2024/12/24564542_s-e1734932448483.jpg" referrerpolicy="no-referrer" alt=""></div><div class="txt">下地補修工事・付帯部塗装</div></div>
+          <div class="tstep"><div class="thumb"><span class="stepno">STEP5</span><img src="https://aoikikaku-paint.com/wp-content/uploads/2024/12/22093915_s.jpg" referrerpolicy="no-referrer" alt=""></div><div class="txt">外壁と屋根の塗装</div></div>
+          <div class="tstep"><div class="thumb"><span class="stepno">STEP6</span><img src="https://aoikikaku-paint.com/wp-content/uploads/2024/12/23910406_s-e1734932572484.jpg" referrerpolicy="no-referrer" alt=""></div><div class="txt">付帯部塗装・掃除・手直し</div></div>
+          <div class="tstep"><div class="thumb"><span class="stepno">STEP7</span><img src="https://aoikikaku-paint.com/wp-content/uploads/2024/12/25068229_s.jpg" referrerpolicy="no-referrer" alt=""></div><div class="txt">検査・足場解体</div></div>
+          <div class="tstep"><div class="thumb"><span class="stepno">STEP8</span><img src="https://aoikikaku-paint.com/wp-content/uploads/2024/12/1563677_s-2.jpg" referrerpolicy="no-referrer" alt=""></div><div class="txt">掃除・点検・引渡し</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="areas" id="areas">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <div class="kicker">Area</div>
+        <h2>対応エリア</h2>
+      </div>
+      <div class="area-grid">
+        <div class="area-card reveal"><h3>福岡県</h3><p>福岡市・北九州市・久留米市・大牟田市・直方市・飯塚市・田川市・柳川市・八女市・筑後市・大川市・行橋市・豊前市・中間市・小郡市・筑紫野市・春日市・大野城市・宗像市・太宰府市・古賀市・福津市・うきは市・宮若市・嘉麻市・朝倉市・みやま市・糸島市・那珂川市</p></div>
+        <div class="area-card reveal"><h3>佐賀県</h3><p>佐賀市・唐津市・鳥栖市・多久市・伊万里市・武雄市・鹿島市・小城市・嬉野市・神埼市</p></div>
+        <div class="area-card reveal"><h3>熊本県</h3><p>熊本市・八代市・人吉市・荒尾市・水俣市・玉名市・山鹿市・菊池市・宇土市・上天草市・宇城市・阿蘇市・天草市・合志市</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="reform">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <div class="kicker">Reform</div>
+        <h2>リフォーム工事も断然お得です</h2>
+      </div>
+      <div class="reform-grid">
+        <div class="reform-card reveal"><img src="https://aoikikaku-paint.com/wp-content/uploads/2024/12/24745534_s.jpg" referrerpolicy="no-referrer" alt="システムキッチン設置"><div class="cap">システムキッチン設置</div></div>
+        <div class="reform-card reveal"><img src="https://aoikikaku-paint.com/wp-content/uploads/2024/12/24887318_s-e1734933942665.jpg" referrerpolicy="no-referrer" alt="土間コンクリート工事"><div class="cap">土間コンクリート工事</div></div>
+        <div class="reform-card reveal"><img src="https://aoikikaku-paint.com/wp-content/uploads/2024/12/22841401_s-e1734934050275.jpg" referrerpolicy="no-referrer" alt="カーポート設置"><div class="cap">カーポート設置</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="insta">
+    <div class="wrap">
+      <p>＼ インスタ始めました ／</p>
+      <a href="https://www.instagram.com/marugotoreform">@marugotoreform</a>
+    </div>
+  </section>
+</main>
+
+<footer id="contact">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <img class="foot-logo" src="https://aoikikaku-paint.com/wp-content/uploads/2024/12/%E4%BC%9A%E7%A4%BE%E3%83%AD%E3%82%B4%E5%AE%8C%E6%88%90%E7%89%88-1024x576.png" alt="あおい企画株式会社" referrerpolicy="no-referrer">
+        <p style="color:#c7c1b3;font-size:.9rem;max-width:32ch;">〒830-0042 福岡県久留米市荘島町330-3 205号</p>
+      </div>
+      <div class="foot-col">
+        <h4>お問い合わせ</h4>
+        <a class="foot-tel" href="tel:07065949268">070-6594-9268</a>
+        <a href="https://aoikikaku-paint.com/contact/">お問い合わせフォーム →</a>
+      </div>
+      <div class="foot-col">
+        <h4>サイト内リンク</h4>
+        <a href="#services">業務内容</a>
+        <a href="https://aoikikaku-paint.com/price/">料金表</a>
+        <a href="https://www.instagram.com/marugotoreform">Instagram</a>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2024 あおい企画</span>
+      <span>福岡・佐賀・熊本の外壁塗装／屋根塗装／リフォーム</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // 1) hero slideshow - JavaScript controlled (no reliance on CSS animation)
+  var slides = document.querySelectorAll('#heroSlides .slide');
+  var slideIndex = 0;
+  function showNextSlide(){
+    slides.forEach(function(s){ s.classList.remove('active'); });
+    slides[slideIndex].classList.add('active');
+    slideIndex = (slideIndex + 1) % slides.length;
+  }
+  showNextSlide();
+  setInterval(showNextSlide, 3500);
+
+  // 2) before/after - JavaScript controlled sweep
+  var baAfter = document.getElementById('baAfter');
+  var baHandle = document.getElementById('baHandle');
+  var baOn = false;
+  function toggleBA(){
+    baOn = !baOn;
+    if(baOn){
+      baAfter.style.clipPath = 'inset(0 6% 0 0)';
+      baHandle.style.left = '94%';
+    } else {
+      baAfter.style.clipPath = 'inset(0 100% 0 0)';
+      baHandle.style.left = '0%';
+    }
+  }
+  setInterval(toggleBA, 2800);
+</script>
+</body>
+</html>
