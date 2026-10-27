@@ -1,0 +1,2153 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ニシオ能力計算表</title>
+<style>
+  :root{
+    --ink:#1b1a17; --paper:#f2ede2; --panel:#fffdf8;
+    --crane-yellow:#f0a71a; --crane-yellow-deep:#c9840a;
+    --steel:#3a4048; --steel-deep:#252a30; --line:#d8cfb8; --radius:14px;
+    --ok:#1f8a4c; --ng:#c8412f;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{
+    margin:0; padding:0; background:var(--paper);
+    background-image:repeating-linear-gradient(135deg, rgba(0,0,0,0.02) 0px, rgba(0,0,0,0.02) 2px, transparent 2px, transparent 14px);
+    color:var(--ink);
+    font-family:-apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", sans-serif;
+    -webkit-font-smoothing:antialiased; min-height:100dvh;
+  }
+  .page{ width:100%; overflow-x:hidden; max-width:520px; margin:0 auto; padding: max(12px, env(safe-area-inset-top)) 14px calc(env(safe-area-inset-bottom) + 40px); }
+
+  .header{ background:var(--steel-deep); border-radius:var(--radius); padding:15px 14px 9px; position:relative; overflow:hidden; box-shadow:0 5px 0 rgba(0,0,0,0.15); }
+  .header::before{ content:""; position:absolute; left:0; right:0; top:0; height:7px;
+    background:repeating-linear-gradient(45deg, var(--crane-yellow) 0 12px, var(--steel-deep) 12px 24px); }
+  .brand-line{ color:#fff; font-size:14px; font-weight:900; letter-spacing:0.06em; margin-bottom:5px; }
+  .tonnage-row{ display:flex; align-items:flex-end; justify-content:space-between; margin-top:6px; }
+  .tonnage-display{ display:flex; align-items:baseline; gap:2px; line-height:1; }
+  .tonnage-num{ font-size:34px; font-weight:900; color:var(--crane-yellow); letter-spacing:-0.02em; }
+  .tonnage-unit{ font-size:18px; font-weight:800; color:var(--crane-yellow); margin-left:2px; }
+  .tonnage-caption{ font-size:10.5px; font-weight:700; color:#9aa0a8; margin-bottom:2px; }
+  .eyebrow{ color:var(--crane-yellow); font-size:11px; font-weight:700; letter-spacing:0.02em; margin:7px 0 2px; }
+  h1{ color:#fff; font-size:17px; line-height:1.25; margin:0 0 7px; font-weight:800; }
+  .cond-tag{ display:inline-flex; align-items:center; gap:6px; background:rgba(240,167,26,0.12); border:1px solid rgba(240,167,26,0.35);
+    color:var(--crane-yellow); font-size:10px; font-weight:600; padding:2px 8px; line-height:1.3; border-radius:999px; }
+  .cond-tag svg{ width:13px; height:13px; flex:none; }
+
+  .crane-tabs{ display:grid; grid-template-columns:repeat(6,1fr); gap:5px; }
+  .crane-tabs button{ appearance:none; border:2.5px solid var(--accent, var(--line)); background:#fff; color:var(--steel-deep);
+    padding:6px 2px 5px; border-radius:11px; font-family:inherit; font-weight:900; text-align:center; transition:background 0.15s ease, color 0.15s ease; }
+  .crane-tabs button .cap-num{ display:block; font-size:22px; line-height:1.05; color:inherit; letter-spacing:-0.02em; }
+  .crane-tabs button .cap-unit{ display:block; font-size:10px; font-weight:800; color:inherit; opacity:0.8; margin-top:1px; }
+  .crane-tabs button.active{ background:var(--accent, var(--steel-deep)); color:var(--on, #fff); box-shadow:0 3px 0 rgba(0,0,0,0.2); }
+  .crane-tabs button.active .cap-num, .crane-tabs button.active .cap-unit{ color:var(--on, #fff); opacity:1; }
+  .crane-tabs button:active{ transform:scale(0.98); }
+
+  .card{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); margin-top:8px; padding:10px 12px; }
+  .field{ margin-bottom:6px; }
+  .field:last-child{ margin-bottom:0; }
+  .field label{ display:block; font-size:12px; font-weight:700; color:var(--steel-deep); margin-bottom:3px; }
+  .field label.label-primary{ font-size:14px; font-weight:900; color:var(--ink); }
+  .field .unit-hint{ font-weight:400; color:#8a8272; font-size:11.5px; margin-left:4px; }
+
+  .segmented{ display:grid; grid-template-columns:repeat(var(--boom-count, 6), 1fr); gap:5px; }
+  .segmented button{ appearance:none; border:1.5px solid var(--line); background:#fff; color:var(--ink); padding:6px 2px; font-size:12px; font-weight:700;
+    border-radius:8px; font-family:inherit; min-width:0; white-space:nowrap; }
+  .segmented button.active{ background:var(--steel-deep); border-color:var(--steel-deep); color:#fff; }
+  .segmented button:active{ transform:scale(0.97); }
+
+  .radius-row{ display:flex; align-items:stretch; gap:8px; }
+  .stepper-btn{ appearance:none; border:2px solid var(--line); background:#fff; width:44px; border-radius:9px; font-size:22px; font-weight:800; color:var(--steel-deep); line-height:1; }
+  .stepper-btn:active{ background:var(--paper); }
+  input[type="text"]{ flex:1; min-width:0; border:2px solid var(--line); border-radius:9px; font-size:26px; font-weight:900; text-align:center;
+    padding:3px 6px; background:#fff; color:var(--ink); font-family:inherit; letter-spacing:-0.01em; }
+  input[type="text"]:focus{ outline:none; border-color:var(--crane-yellow-deep); box-shadow:0 0 0 3px rgba(240,167,26,0.2); }
+
+  /* Obstacle section */
+  .obs-divider{ margin:6px 0 5px; padding-top:6px; border-top:2px dashed var(--line); display:flex; align-items:center; gap:7px;
+    font-size:13.5px; font-weight:900; color:var(--ink); }
+  .obs-divider svg{ width:16px; height:16px; color:var(--crane-yellow-deep); }
+  .obs-divider small{ font-weight:600; font-size:11px; color:#8a8272; }
+  .obs-grid{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:6px 8px; }
+  .obs-grid .field{ min-width:0; }
+  .obs-grid input[type="text"]{ width:100%; min-width:0; }
+  .obs-grid .radius-row input[type="text"]{ width:0; flex:1 1 0; }
+  .obs-grid label{ font-size:11px !important; white-space:nowrap; overflow:hidden; }
+  .obs-grid .unit-hint{ margin-left:2px; }
+  .obs-grid .field{ margin:0; }
+  .obs-grid .field.wide{ grid-column:1 / -1; }
+  .dot{ display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:4px; vertical-align:-1px; }
+  .dot-r{ background:#0e9aa7; } .dot-h{ background:#8e44ad; } .dot-w{ background:#c9840a; } .dot-m{ background:#3a4048; }
+  #radiusInput, #condRadius{ border-color:#3a4048; } #loadWeight, #condLoad{ border-color:#c9840a; color:#8f5e05; }
+  #condDist{ border-color:#0e9aa7; color:#0b6f79; } #condHeight{ border-color:#8e44ad; color:#6b2f85; }
+  #condLoadMinus, #condLoadPlus, #loadMinus, #loadPlus{ border-color:#c9840a; color:#8f5e05; }
+  #condDistMinus, #condDistPlus{ border-color:#0e9aa7; color:#0b6f79; }
+  #condHeightMinus, #condHeightPlus{ border-color:#8e44ad; color:#6b2f85; }
+  .pills{ display:flex; gap:6px; }
+  .num-slider{ display:block; width:100%; height:30px; margin:2px 0 0; padding:0; background:transparent; accent-color:var(--sl, #c9840a); }
+  input[readonly]{ caret-color:transparent; }
+  .auto-note{ margin-top:8px; background:#fff4d6; border:2px solid #e0a82e; color:#7a5200; border-radius:11px; padding:7px 10px; font-size:12px; font-weight:700; line-height:1.45; white-space:pre-line; }
+  #obsDist{ border-color:#0e9aa7; color:#0b6f79; } #obsHeight{ border-color:#8e44ad; color:#6b2f85; }
+  #obsDistMinus, #obsDistPlus{ border-color:#0e9aa7; color:#0b6f79; }
+  #obsHeightMinus, #obsHeightPlus{ border-color:#8e44ad; color:#6b2f85; }
+  #obsDiagram svg{ width:100%; height:auto; display:block; background:#f7f3e6; border-radius:10px; margin-bottom:6px; }
+  .obs-grid .radius-row{ gap:4px; }
+  .obs-grid .stepper-btn{ width:30px; font-size:18px; border-radius:8px; flex:none; padding:0; }
+  .obs-grid input[type="text"]{ font-size:18px; padding:4px 2px; }
+
+  .calc-btn{ appearance:none; width:100%; margin-top:6px; padding:7px; font-size:16px; font-weight:800; letter-spacing:0.02em; color:#221a05;
+    background:linear-gradient(180deg, var(--crane-yellow) 0%, var(--crane-yellow-deep) 100%); border:none; border-radius:11px; box-shadow:0 3px 0 #8f5e05; font-family:inherit; }
+  .calc-btn:disabled{ background:#d9d2bd; color:#8a8272; box-shadow:0 3px 0 #b9b19a; }
+  .calc-btn:active{ transform:translateY(3px); box-shadow:0 1px 0 #8f5e05; }
+
+  .date-pill{ flex:none; appearance:none; border:1.5px solid rgba(240,167,26,0.6); background:rgba(240,167,26,0.12);
+    color:var(--crane-yellow); font-family:inherit; font-size:11px; font-weight:800; padding:2px 9px; border-radius:999px; }
+  .date-pill:active{ transform:scale(0.97); }
+  .start-title{ color:#fff; font-size:22px; font-weight:900; margin:10px 0 4px; letter-spacing:0.02em; }
+  .start-sub{ color:#cfd3d8; font-size:12px; line-height:1.5; }
+  input[type="date"]{ width:100%; border:2px solid var(--line); border-radius:9px; font-size:22px; font-weight:900; text-align:center; padding:8px 6px;
+    background:#fff; color:var(--ink); font-family:inherit; min-height:48px; }
+  input[type="date"]:focus{ outline:none; border-color:var(--crane-yellow-deep); box-shadow:0 0 0 3px rgba(240,167,26,0.2); }
+  .sub-btn{ appearance:none; width:100%; margin-top:8px; padding:9px; font-size:14px; font-weight:800; color:var(--steel-deep); background:#fff;
+    border:2px solid var(--line); border-radius:11px; font-family:inherit; }
+  .sub-btn:active{ background:var(--paper); }
+  .crane-badge{ display:flex; align-items:center; gap:12px; background:var(--accent, var(--steel-deep)); color:var(--on, #fff); border-radius:12px; padding:9px 14px; margin-bottom:4px; box-shadow:0 3px 0 rgba(0,0,0,0.18); }
+  .crane-badge .big{ font-size:46px; font-weight:900; line-height:1; letter-spacing:-0.03em; flex:none; }
+  .crane-badge .big small{ font-size:22px; font-weight:900; margin-left:2px; }
+  .crane-badge .txt{ font-size:12px; font-weight:800; line-height:1.45; }
+  .crane-badge .txt b{ display:block; font-size:15px; font-weight:900; }
+  .confirm-row{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; padding:9px 2px; border-bottom:1px dashed var(--line); }
+  .confirm-row .k{ font-size:12px; font-weight:700; color:#8a8272; flex:none; }
+  .confirm-row .v{ font-size:15px; font-weight:900; text-align:right; }
+  .ng-banner{ background:#fbe9e5; border:2px solid #c8412f; color:#7d2316; border-radius:11px; padding:8px 10px; font-size:12.5px; font-weight:800; line-height:1.5; margin-bottom:8px; }
+  .confirm-row.ng .v{ color:#c8412f; font-weight:900; font-size:13px; }
+  .confirm-row.rated{ padding-top:3px; }
+  .confirm-row.rated .k, .confirm-row.rated .v{ font-size:12px; color:#8a8272; font-weight:700; }
+  .confirm-row.cap{ border-bottom:none; padding-bottom:0; }
+  .confirm-row.cap .v{ font-size:20px; color:var(--crane-yellow-deep); }
+  .confirm-fields{ margin-top:12px; }
+  .confirm-fields label{ display:block; font-size:12px; font-weight:700; color:var(--steel-deep); margin:8px 0 3px; }
+  .plain-input{ width:100%; border:2px solid var(--line); border-radius:9px; font-size:16px; padding:9px 10px; background:#fff; color:var(--ink); font-family:inherit; }
+  .plain-input:focus{ outline:none; border-color:var(--crane-yellow-deep); box-shadow:0 0 0 3px rgba(240,167,26,0.2); }
+  .send-error{ margin-top:8px; font-size:12px; font-weight:700; color:#c8412f; line-height:1.5; }
+  #decideBtn{ background:linear-gradient(180deg,#4a90f5 0%,#2a62c9 100%); color:#fff; box-shadow:0 3px 0 #1a428a; text-shadow:0 1px 0 rgba(0,0,0,0.2); letter-spacing:0.05em; }
+  #decideBtn:active{ transform:translateY(3px); box-shadow:0 1px 0 #1a428a; }
+  #decideBtn:disabled{ background:#d9d2bd; color:#8a8272; box-shadow:0 3px 0 #b9b19a; text-shadow:none; }
+  #confirmBtn{ margin-top:14px; padding:13px; font-size:18px; background:linear-gradient(180deg,#35c06e 0%,#1f9d55 100%); color:#fff; box-shadow:0 3px 0 #146a38; text-shadow:0 1px 0 rgba(0,0,0,0.2); }
+  #confirmBtn:disabled{ background:#d9d2bd; color:#8a8272; box-shadow:0 3px 0 #b9b19a; text-shadow:none; }
+  #confirmBtn:active{ transform:translateY(3px); box-shadow:0 1px 0 #146a38; }
+  #screens{ display:grid; }
+  #screens > .page{ grid-area:1 / 1; width:100%; justify-self:center; }
+  .page.is-hidden{ display:none; }
+  .top-row{ display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:7px; }
+  .top-row .brand-line{ margin-bottom:0; }
+  .head-row{ display:flex; align-items:flex-end; justify-content:space-between; gap:8px; margin-top:2px; }
+  .head-left{ min-width:0; }
+  .result-card{ text-align:right; flex:none; }
+  .result-card .cap-label{ font-size:10px; font-weight:800; color:#9aa0a8; letter-spacing:0.04em; margin-bottom:1px; }
+  .result-value{ font-size:38px; font-weight:900; font-variant-numeric:tabular-nums; line-height:1; letter-spacing:-0.02em; color:var(--accent, var(--crane-yellow)); }
+  .result-value .rated{ display:block; font-size:11px; font-weight:800; letter-spacing:0; color:#cfd3d8; margin-top:3px; text-align:right; }
+  .result-value .t{ font-size:16px; font-weight:800; margin-left:3px; color:#fff; }
+  .result-detail{ margin-top:5px; font-size:10.5px; color:#cfd3d8; line-height:1.35; }
+  .result-detail.warn{ color:#f3b26b; }
+  .result-card.state-empty .result-value{ color:#6b717a; }
+  .result-card.state-error .result-value{ color:#ff8b6a; font-size:18px; }
+  .result-card.state-error .result-value.ng-big{ font-size:38px; }
+  .result-card.state-error .result-value.ng-mid{ font-size:15px; line-height:1.25; max-width:210px; margin-left:auto; }
+
+  /* Obstacle result */
+  .obs-card{ margin-top:8px; padding:10px; }
+  .obs-title{ font-size:12.5px; font-weight:900; margin:0 0 6px; }
+  .obs-summary{ border-radius:10px; padding:7px 10px; font-size:12px; line-height:1.45; font-weight:700; border:2px solid; }
+  .obs-summary.ok{ background:#e6f4ec; border-color:var(--ok); color:#14562f; }
+  .jib-sub{ font-size:11px; font-weight:700; color:#8a8272; margin:6px 0 3px; }
+  .obs-summary.warn{ background:#fff4d6; border-color:#e0a82e; color:#7a5200; }
+  .obs-summary.ng{ background:#fbe9e5; border-color:var(--ng); color:#7d2316; }
+  .obs-summary .big{ font-size:16px; font-weight:900; display:block; margin-bottom:1px; }
+  .obs-table{ margin-top:6px; font-size:11.5px; }
+  .obs-head, .obs-row{ display:grid; grid-template-columns:repeat(4, 1fr) 1.3fr; gap:2px; align-items:center; padding:2px 2px; text-align:center; }
+  .obs-head > div, .obs-row > div{ min-width:0; white-space:nowrap; }
+  .obs-head{ font-size:10px; font-weight:800; color:#8a8272; border-bottom:1px solid var(--line); }
+  .obs-row{ border-bottom:1px solid #eee6d2; font-variant-numeric:tabular-nums; font-weight:700; }
+  .obs-row.sel{ background:#fff4d6; border-radius:8px; }
+  .obs-row .verdict{ font-size:11px; font-weight:800; }
+  .obs-row.ok .verdict{ color:var(--ok); }
+  .obs-row.ng .verdict{ color:var(--ng); }
+  .obs-row.ng{ color:#8a8272; }
+  .obs-reco{ margin-top:6px; font-size:11.5px; font-weight:700; color:var(--steel-deep); line-height:1.5; }
+  .obs-warn{ margin-top:5px; font-size:10px; color:#b0640a; line-height:1.4; }
+
+  .note{ margin-top:8px; font-size:9.5px; line-height:1.5; color:#8a8272; text-align:center; padding:0 6px; }
+
+  @media (max-width:360px){
+    .segmented button{ font-size:10px; padding:7px 1px; }
+    .crane-tabs button .cap-num{ font-size:16px; }
+    input[type="text"]{ font-size:26px; }
+    .obs-grid input[type="text"]{ font-size:16px; }
+    .obs-head, .obs-row{ font-size:10.5px; }
+  }
+  @media (max-height:700px){
+    .tonnage-num{ font-size:34px; }
+    h1{ font-size:15px; }
+  }
+</style>
+</head>
+<body>
+<div id="screens">
+<div class="page" id="screenStart">
+  <div class="header">
+    <div class="brand-line">ニシオ</div>
+    <div class="start-title">クレーン ご注文</div>
+    <div class="start-sub">作業日（明日以降）を選んで、「次へ」を押してください。</div>
+  </div>
+  <div class="card">
+    <div class="field">
+      <label class="label-primary">作業日</label>
+      <input type="date" id="orderDate">
+      <div class="send-error" id="dateError" style="display:none">当日と過去の日付は選べません。明日以降の日付を選んでください。</div>
+    </div>
+    <button class="calc-btn" id="startBtn" type="button" disabled>次へ（条件入力）▶</button>
+  </div>
+  <div class="note">※ 作業日は明日以降の日付を選べます。日付を入れると「次へ」が押せます。</div>
+</div>
+
+<div class="page is-hidden" id="screenCond">
+  <div class="header">
+    <div class="brand-line">ニシオ</div>
+    <div class="start-title">ご注文の条件</div>
+    <div class="start-sub">条件を入れて「選定」を押すと、合う一番小さいクレーンを選びます。</div>
+  </div>
+  <div class="card">
+    <div class="field">
+      <label class="label-primary"><i class="dot dot-w"></i>吊り荷の重さ <span class="unit-hint">t</span></label>
+      <div class="radius-row">
+        <button class="stepper-btn" id="condLoadMinus" type="button" aria-label="吊り荷を減らす">−</button>
+        <input type="text" id="condLoad" inputmode="decimal" placeholder="0">
+        <button class="stepper-btn" id="condLoadPlus" type="button" aria-label="吊り荷を増やす">＋</button>
+      </div>
+    </div>
+    <div class="field">
+      <label class="label-primary"><i class="dot dot-m"></i>作業半径 <span class="unit-hint">m</span></label>
+      <div class="radius-row">
+        <button class="stepper-btn" id="condRadiusMinus" type="button" aria-label="作業半径を減らす">−</button>
+        <input type="text" id="condRadius" inputmode="decimal" placeholder="0">
+        <button class="stepper-btn" id="condRadiusPlus" type="button" aria-label="作業半径を増やす">＋</button>
+      </div>
+    </div>
+    <div class="field">
+      <label class="label-primary"><i class="dot dot-r"></i>障害物までの距離 <span class="unit-hint">m（なければ空欄）</span></label>
+      <div class="radius-row">
+        <button class="stepper-btn" id="condDistMinus" type="button" aria-label="障害物の距離を減らす">−</button>
+        <input type="text" id="condDist" inputmode="decimal" placeholder="なし">
+        <button class="stepper-btn" id="condDistPlus" type="button" aria-label="障害物の距離を増やす">＋</button>
+      </div>
+    </div>
+    <div class="field">
+      <label class="label-primary"><i class="dot dot-h"></i>障害物の高さ <span class="unit-hint">m（なければ空欄）</span></label>
+      <div class="radius-row">
+        <button class="stepper-btn" id="condHeightMinus" type="button" aria-label="障害物の高さを減らす">−</button>
+        <input type="text" id="condHeight" inputmode="decimal" placeholder="なし">
+        <button class="stepper-btn" id="condHeightPlus" type="button" aria-label="障害物の高さを増やす">＋</button>
+      </div>
+    </div>
+    <button class="calc-btn" id="selectBtn" type="button">選定 ▶</button>
+    <div class="send-error" id="condError" style="display:none"></div>
+    <button class="sub-btn" id="condBackBtn" type="button">◀ 日付に戻る</button>
+  </div>
+  <div class="note">※ 吊り荷の重さは、クレーンの能力（定格荷重の80%）と比べます。障害物を入力した場合は、障害物の半径より2m以上奥まで届く作業半径で選定します。</div>
+</div>
+
+<div class="page is-hidden" id="screenCalc">
+
+  <div class="header">
+    <div class="top-row">
+      <div class="brand-line">ニシオ能力計算表</div>
+      <div class="pills"><button class="date-pill" id="condBtn" type="button" aria-label="条件を変更">条件 ▾</button><button class="date-pill" id="backBtn" type="button" aria-label="作業日を変更"><span id="datePillText"></span> ▾</button></div>
+    </div>
+    <div class="head-row">
+      <div class="head-left">
+        <span class="cond-tag" id="condTag"><span id="condTagText">13t・アウトリガ 最大張出 4.7m・全周</span></span>
+      </div>
+      <div class="result-card state-empty" id="resultCard">
+        <div class="cap-label">最大吊上げ能力（定格の80%）</div>
+        <div class="result-value" id="resultValue">－</div>
+      </div>
+    </div>
+    <div class="result-detail" id="resultDetail">ブーム長と作業半径を入力してください。</div>
+    <div style="display:none">
+      <span id="tonnageNum">13</span><span id="tonnageUnit">t</span><h1 id="craneTitle"></h1>
+    </div>
+  </div>
+
+  <div class="auto-note" id="autoNote" style="display:none"></div>
+
+  <div class="card">
+    <div class="field">
+      <label class="label-primary">ご注文のクレーン <span class="unit-hint">タップで選択</span></label>
+      <div class="crane-tabs" id="craneTabs"></div>
+    </div>
+
+    <div class="field">
+      <label>ブーム長 <span class="unit-hint" id="boomHint">m</span></label>
+      <div class="segmented" id="boomSeg"></div>
+    </div>
+
+    <div class="field" id="jibField">
+      <label>ジブ選定 <span class="unit-hint">対応機種・ブームで選択</span></label>
+      <button class="sub-btn" id="jibAutoBtn" type="button" style="margin:0 0 7px">このクレーンでジブを選定</button>
+      <div id="jibUnavailable" class="jib-sub" style="display:none">現在のブーム長ではジブを選べません。上のボタンでジブ対応ブームを探せます。</div>
+      <div class="segmented" id="jibSeg"></div>
+      <div id="jibOffWrap" style="display:none">
+        <div class="jib-sub">オフセット角</div>
+        <div class="segmented" id="jibOffSeg"></div>
+      </div>
+      <div class="jib-sub" id="jibNote">「なし」に戻すとブームのみで計算します。</div>
+    </div>
+
+    <div class="obs-grid" style="margin-bottom:8px">
+      <div class="field">
+        <label class="label-primary"><i class="dot dot-m"></i>作業半径 <span class="unit-hint">m</span></label>
+        <div class="radius-row">
+          <button class="stepper-btn" id="radiusMinus" type="button" aria-label="半径を減らす">−</button>
+          <input type="text" id="radiusInput" inputmode="decimal" pattern="[0-9.]*" value="6.0">
+          <button class="stepper-btn" id="radiusPlus" type="button" aria-label="半径を増やす">＋</button>
+        </div>
+      </div>
+      <div class="field">
+        <label class="label-primary"><i class="dot dot-w"></i>吊り荷の重さ <span class="unit-hint">t</span></label>
+        <div class="radius-row">
+          <button class="stepper-btn" id="loadMinus" type="button" aria-label="吊り荷を減らす">−</button>
+          <input type="text" id="loadWeight" inputmode="decimal" placeholder="0">
+          <button class="stepper-btn" id="loadPlus" type="button" aria-label="吊り荷を増やす">＋</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="obs-divider">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 21V9l8-5 8 5v12"/><path d="M9 21v-6h6v6"/></svg>
+      障害物チェック <small>（旋回中心からの半径と高さ）</small>
+    </div>
+    <div class="obs-grid">
+      <div class="field">
+        <label><i class="dot dot-r"></i>障害物までの作業半径 <span class="unit-hint">m</span></label>
+        <div class="radius-row">
+          <button class="stepper-btn" id="obsDistMinus" type="button" aria-label="障害物の半径を減らす">−</button>
+          <input type="text" id="obsDist" inputmode="decimal" placeholder="なし">
+          <button class="stepper-btn" id="obsDistPlus" type="button" aria-label="障害物の半径を増やす">＋</button>
+        </div>
+      </div>
+      <div class="field">
+        <label><i class="dot dot-h"></i>障害物の高さ <span class="unit-hint">m</span></label>
+        <div class="radius-row">
+          <button class="stepper-btn" id="obsHeightMinus" type="button" aria-label="障害物の高さを減らす">−</button>
+          <input type="text" id="obsHeight" inputmode="decimal" placeholder="なし">
+          <button class="stepper-btn" id="obsHeightPlus" type="button" aria-label="障害物の高さを増やす">＋</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="calc-btn" id="decideBtn" type="button" disabled>確認画面へ ▶</button>
+    <button class="sub-btn" id="backCondBtn" type="button">◀ 条件入力に戻る</button>
+  </div>
+
+  <div class="card obs-card" id="obsCard" style="display:none">
+    <div class="obs-title">障害物を越えて2m以上奥まで届くか</div>
+    <div id="obsDiagram"></div>
+    <div class="obs-summary" id="obsSummary"></div>
+    <div class="obs-table" id="obsTable"></div>
+    <div class="obs-reco" id="obsReco"></div>
+    <div class="obs-warn" id="obsWarn"></div>
+  </div>
+
+  <div class="note">
+    ※ 試作版です。実作業ではメーカーの性能表・取扱説明書を必ず確認してください。ブームのたわみ、フック・吊荷の分は含みません。13tの性能表の括弧内（GR-130N型）は省略。
+  </div>
+
+</div>
+
+<div class="page is-hidden" id="screenConfirm">
+  <div class="header">
+    <div class="brand-line">ニシオ</div>
+    <div class="start-title">ご注文内容の確認</div>
+    <div class="start-sub">この内容でよろしいですか？</div>
+  </div>
+  <div class="card">
+    <div class="ng-banner" id="confirmWarn" style="display:none"></div>
+    <div id="confirmCrane"></div>
+    <div id="confirmRows"></div>
+    <div class="confirm-fields">
+      <label for="custCompany">会社名</label>
+      <input class="plain-input" type="text" id="custCompany" autocomplete="organization" placeholder="例 山田建設株式会社">
+      <label for="custSite">現場名</label>
+      <input class="plain-input" type="text" id="custSite" autocomplete="off" placeholder="例 ○○ビル新築工事">
+      <label for="custPerson">担当者</label>
+      <input class="plain-input" type="text" id="custPerson" autocomplete="name" placeholder="例 山田 太郎">
+      <label for="custPhone">電話番号</label>
+      <input class="plain-input" type="tel" id="custPhone" autocomplete="tel" inputmode="tel" placeholder="例 090-1234-5678">
+    </div>
+    <button class="calc-btn" id="confirmBtn" type="button" disabled>注文確定（メールを送信）</button>
+    <div class="send-error" id="sendError" style="display:none"></div>
+    <button class="sub-btn" id="fallbackBtn" type="button" style="display:none">メールアプリで送る</button>
+    <button class="sub-btn" id="editBtn" type="button">戻る（修正する）</button>
+  </div>
+  <div class="note">※ 会社名・現場名・担当者・電話番号を入れると「注文確定」が押せます。押すと注文メールが送信されます。</div>
+</div>
+
+<div class="page is-hidden" id="screenDone">
+  <div class="header">
+    <div class="brand-line">ニシオ</div>
+    <div class="start-title">ご注文を送信しました</div>
+    <div class="start-sub">ありがとうございます。担当者より折り返しご連絡いたします。</div>
+  </div>
+  <div class="card">
+    <button class="calc-btn" id="doneBtn" type="button">最初の画面に戻る</button>
+  </div>
+  <div class="note" id="doneNote"></div>
+</div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /*
+    pivot: ブーム起伏支点（フートピン）の位置
+      r0 = 旋回中心からの水平距離(m)（後ろ側はマイナス）
+      h0 = 地上高さ(m)
+    13t: r0 は性能表の最大作業半径（ブーム長−1.3〜1.5m）から、h0 は作業範囲図からの概算。16t/25t は別の性能表が用意でき次第追加。
+    取扱説明書・作業範囲図の寸法で必ず確認・修正してください。
+    maxAngle = ブームの最大起伏角(°)
+  */
+  var CRANES = {
+    "13": {
+      label: "13t",
+      title: "13tクレーン 吊上げ能力計算",
+      condition: "アウトリガ 最大張出 4.7m・全周",
+      accent: "#3f7ee8",
+      pivot: { r0: -1.3, h0: 2.0, maxAngle: 82, verified: false },
+      boomLengths: [5.3, 9.0, 12.7, 16.4, 20.1, 23.8],
+      // 各ブームの最大作業半径（性能表の括弧付き半径・最終行）
+      maxRadius: [4.0, 7.7, 11.4, 15.0, 18.7, 22.3],
+      // ジブ付き性能表（23.8mブーム＋ジブ）。rows は [作業半径(m), 定格総荷重(t), ブーム角(°)]
+      jib: {
+        options: [
+        { length: 3.6,
+          booms: {
+            5: {
+            5: { rows: [[4.1, 1.6, 82], [5.1, 1.6, 80], [7.6, 1.55, 75], [9.9, 1.25, 70], [12.1, 1.05, 65], [14.2, 0.9, 60], [16.1, 0.72, 55], [17.9, 0.6, 50], [19.5, 0.45, 45], [21.0, 0.33, 40], [22.3, 0.25, 35]] },
+            25: { rows: [[5.4, 1.4, 82], [6.4, 1.4, 80], [8.7, 1.2, 75], [11.0, 1.0, 70], [13.1, 0.9, 65], [15.1, 0.8, 60], [16.9, 0.66, 55], [18.6, 0.58, 50], [20.1, 0.42, 45], [21.5, 0.32, 40], [22.7, 0.24, 35]] },
+            45: { rows: [[6.3, 1.0, 82], [7.2, 1.0, 80], [9.4, 0.93, 75], [11.6, 0.85, 70], [13.6, 0.77, 65], [15.5, 0.7, 60], [17.3, 0.65, 55], [18.9, 0.56, 50], [20.3, 0.44, 45]] },
+            60: { rows: [[6.6, 0.65, 82], [7.5, 0.65, 80], [9.6, 0.65, 75], [11.7, 0.65, 70], [13.6, 0.65, 65], [15.5, 0.65, 60]] }
+            }
+          } },
+        { length: 5.5,
+          booms: {
+            5: {
+            5: { rows: [[4.5, 1.0, 82], [5.6, 1.0, 80], [8.3, 1.0, 75], [10.8, 1.0, 70], [13.1, 0.81, 65], [15.3, 0.69, 60], [17.4, 0.58, 55], [19.3, 0.53, 50], [21.0, 0.4, 45], [22.5, 0.27, 40]] },
+            25: { rows: [[6.5, 1.0, 82], [7.6, 1.0, 80], [10.1, 0.85, 75], [12.4, 0.72, 70], [14.6, 0.61, 65], [16.7, 0.55, 60], [18.6, 0.5, 55], [20.4, 0.44, 50], [21.9, 0.38, 45], [23.3, 0.28, 40]] },
+            45: { rows: [[7.8, 0.65, 82], [8.8, 0.65, 80], [11.1, 0.63, 75], [13.3, 0.58, 70], [15.4, 0.52, 65], [17.3, 0.48, 60], [19.1, 0.45, 55], [20.7, 0.41, 50], [22.1, 0.39, 45]] },
+            60: { rows: [[8.4, 0.4, 82], [9.3, 0.4, 80], [11.5, 0.4, 75], [13.5, 0.4, 70], [15.5, 0.4, 65], [17.3, 0.4, 60]] }
+            }
+          } }
+        ]
+      },
+      defaultRadius: "6.0",
+      data: {
+        1.0:  [13.0, 6.0, null, null, null, null],
+        1.5:  [13.0, 6.0, 6.0, null, null, null],
+        2.0:  [12.0, 6.0, 6.0, 5.0, null, null],
+        2.5:  [10.0, 6.0, 6.0, 5.0, 4.7, null],
+        3.0:  [8.2, 6.0, 6.0, 5.0, 4.7, 3.2],
+        3.5:  [7.0, 6.0, 6.0, 5.0, 4.7, 3.2],
+        4.0:  [6.1, 6.0, 6.0, 5.0, 4.7, 3.2],
+        4.5:  [null, 5.5, 5.45, 5.0, 4.5, 3.2],
+        5.0:  [null, 4.85, 4.8, 4.6, 4.05, 3.2],
+        5.5:  [null, 4.3, 4.3, 4.2, 3.7, 3.2],
+        6.0:  [null, 3.85, 3.85, 3.8, 3.4, 3.0],
+        7.0:  [null, 3.15, 3.1, 3.3, 2.9, 2.6],
+        8.0:  [null, 2.75, 2.6, 2.75, 2.5, 2.25],
+        9.0:  [null, null, 2.1, 2.35, 2.3, 1.95],
+        10.0: [null, null, 1.8, 2.0, 2.05, 1.75],
+        11.0: [null, null, 1.45, 1.65, 1.85, 1.55],
+        12.0: [null, null, 1.35, 1.4, 1.55, 1.4],
+        13.0: [null, null, null, 1.2, 1.3, 1.25],
+        14.0: [null, null, null, 1.0, 1.15, 1.15],
+        15.0: [null, null, null, 0.89, 1.0, 1.05],
+        16.0: [null, null, null, null, 0.86, 0.93],
+        17.0: [null, null, null, null, 0.73, 0.82],
+        18.0: [null, null, null, null, 0.63, 0.71],
+        19.0: [null, null, null, null, 0.56, 0.62],
+        20.0: [null, null, null, null, null, 0.54],
+        22.0: [null, null, null, null, null, 0.39],
+        22.3: [null, null, null, null, null, 0.37]
+      }
+    },
+    "25": {
+      label: "25t",
+      title: "25tクレーン 吊上げ能力計算",
+      condition: "アウトリガ 最大張出 6.6m・全周",
+      accent: "#e2574c",
+      pivot: { r0: -2.9, h0: 2.8, maxAngle: 84, verified: false },
+      boomLengths: [9.35, 16.4, 23.45, 30.5],
+      maxRadius: [6.5, 13.5, 20.5, 27.9],
+      // ジブ付き性能表（ブーム9.35 / 23.45 / 30.5m ＋ ジブ）。作業半径の刻み表。rows は [作業半径(m), 定格総荷重(t)]、deg はブーム角度の範囲
+      jib: {
+        options: [
+        { length: 8.2,
+          gridR: [2.0, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 16.0, 18.0, 20.0, 22.0, 23.0, 24.0, 26.0, 27.0, 28.0, 30.0],
+          booms: {
+            0: {
+              5: { deg: [22, 84], rows: [[2.0, 3.3], [3.0, 3.3], [3.5, 3.3], [4.0, 3.3], [4.5, 3.3], [5.0, 3.3], [5.5, 3.3], [6.0, 3.3], [6.5, 3.3], [7.0, 3.3], [8.0, 3.3], [9.0, 3.15], [10.0, 2.9], [11.0, 2.65], [12.0, 2.5], [13.0, 2.3], [14.0, 2.2]] },
+              25: { deg: [27, 84], rows: [[4.5, 2.3], [5.0, 2.3], [5.5, 2.3], [6.0, 2.3], [6.5, 2.3], [7.0, 2.3], [8.0, 2.3], [9.0, 2.3], [10.0, 2.3], [11.0, 2.3], [12.0, 2.2], [13.0, 2.1], [14.0, 2.05]] },
+              45: { deg: [40, 84], rows: [[6.5, 1.7], [7.0, 1.7], [8.0, 1.7], [9.0, 1.7], [10.0, 1.7], [11.0, 1.7], [12.0, 1.7], [13.0, 1.7]] },
+              60: { deg: [58, 84], rows: [[8.0, 1.1], [9.0, 1.1], [10.0, 1.1], [11.0, 1.1]] }
+            },
+            2: {
+              5: { deg: [17, 84], rows: [[4.0, 3.3], [4.5, 3.3], [5.0, 3.3], [5.5, 3.3], [6.0, 3.3], [6.5, 3.3], [7.0, 3.3], [8.0, 3.3], [9.0, 3.3], [10.0, 3.3], [11.0, 3.3], [12.0, 3.3], [13.0, 3.3], [14.0, 3.2], [16.0, 2.85], [18.0, 2.55], [20.0, 2.0], [22.0, 1.55], [23.0, 1.4], [24.0, 1.2], [26.0, 0.95], [27.0, 0.82], [28.0, 0.71]] },
+              25: { deg: [26, 84], rows: [[7.0, 2.3], [8.0, 2.3], [9.0, 2.3], [10.0, 2.3], [11.0, 2.3], [12.0, 2.3], [13.0, 2.3], [14.0, 2.3], [16.0, 2.3], [18.0, 2.2], [20.0, 2.0], [22.0, 1.7], [23.0, 1.5], [24.0, 1.3], [26.0, 1.0], [27.0, 0.87]] },
+              45: { deg: [45, 84], rows: [[9.0, 1.7], [10.0, 1.7], [11.0, 1.7], [12.0, 1.7], [13.0, 1.7], [14.0, 1.7], [16.0, 1.7], [18.0, 1.7], [20.0, 1.7], [22.0, 1.55], [23.0, 1.55]] },
+              60: { deg: [60, 84], rows: [[10.0, 1.1], [11.0, 1.1], [12.0, 1.1], [13.0, 1.1], [14.0, 1.1], [16.0, 1.1], [18.0, 1.1]] }
+            },
+            3: {
+              5: { deg: [37, 84], rows: [[5.5, 3.3], [6.0, 3.3], [6.5, 3.3], [7.0, 3.3], [8.0, 3.3], [9.0, 3.3], [10.0, 3.3], [11.0, 3.3], [12.0, 3.3], [13.0, 3.3], [14.0, 3.3], [16.0, 3.0], [18.0, 2.55], [20.0, 2.0], [22.0, 1.55], [23.0, 1.35], [24.0, 1.2], [26.0, 0.9], [27.0, 0.76], [28.0, 0.63], [30.0, 0.41]] },
+              25: { deg: [40, 84], rows: [[9.0, 2.3], [10.0, 2.3], [11.0, 2.3], [12.0, 2.3], [13.0, 2.3], [14.0, 2.3], [16.0, 2.3], [18.0, 2.15], [20.0, 2.0], [22.0, 1.7], [23.0, 1.5], [24.0, 1.3], [26.0, 1.0], [27.0, 0.88], [28.0, 0.74], [30.0, 0.49]] },
+              45: { deg: [47, 84], rows: [[11.0, 1.7], [12.0, 1.7], [13.0, 1.7], [14.0, 1.7], [16.0, 1.7], [18.0, 1.65], [20.0, 1.55], [22.0, 1.5], [23.0, 1.45], [24.0, 1.4], [26.0, 1.05], [27.0, 0.94], [28.0, 0.78]] },
+              60: { deg: [58, 84], rows: [[11.0, 1.1], [12.0, 1.1], [13.0, 1.1], [14.0, 1.1], [16.0, 1.1], [18.0, 1.1], [20.0, 1.1], [22.0, 1.1], [23.0, 1.1]] }
+            }
+          } },
+        { length: 13.0,
+          gridR: [3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 16.0, 18.0, 20.0, 22.0, 23.0, 24.0, 26.0, 27.0, 28.0, 30.0, 32.0, 33.0, 34.0],
+          booms: {
+            0: {
+              5: { deg: [27, 84], rows: [[3.0, 2.2], [3.5, 2.2], [4.0, 2.2], [4.5, 2.2], [5.0, 2.2], [5.5, 2.2], [6.0, 2.2], [6.5, 2.1], [7.0, 2.0], [8.0, 1.8], [9.0, 1.65], [10.0, 1.55], [11.0, 1.4], [12.0, 1.3], [13.0, 1.25], [14.0, 1.15], [16.0, 1.05], [18.0, 0.97]] },
+              25: { deg: [36, 84], rows: [[7.0, 1.3], [8.0, 1.3], [9.0, 1.3], [10.0, 1.3], [11.0, 1.2], [12.0, 1.15], [13.0, 1.1], [14.0, 1.05], [16.0, 0.98], [18.0, 0.93]] },
+              45: { deg: [56, 84], rows: [[11.0, 0.85], [12.0, 0.85], [13.0, 0.85], [14.0, 0.85], [16.0, 0.85]] },
+              60: { deg: [57, 84], rows: [[12.0, 0.65], [13.0, 0.65], [14.0, 0.65], [16.0, 0.65]] }
+            },
+            2: {
+              5: { deg: [17, 84], rows: [[5.5, 2.2], [6.0, 2.2], [6.5, 2.2], [7.0, 2.2], [8.0, 2.2], [9.0, 2.2], [10.0, 2.1], [11.0, 2.0], [12.0, 1.85], [13.0, 1.75], [14.0, 1.7], [16.0, 1.5], [18.0, 1.4], [20.0, 1.3], [22.0, 1.2], [23.0, 1.15], [24.0, 1.1], [26.0, 1.05], [27.0, 1.0], [28.0, 0.95], [30.0, 0.78], [32.0, 0.6], [33.0, 0.52]] },
+              25: { deg: [28, 84], rows: [[10.0, 1.3], [11.0, 1.3], [12.0, 1.3], [13.0, 1.3], [14.0, 1.25], [16.0, 1.2], [18.0, 1.1], [20.0, 1.05], [22.0, 1.0], [23.0, 1.0], [24.0, 0.99], [26.0, 0.95], [27.0, 0.92], [28.0, 0.9], [30.0, 0.84], [32.0, 0.65]] },
+              45: { deg: [44, 84], rows: [[13.0, 0.85], [14.0, 0.85], [16.0, 0.85], [18.0, 0.85], [20.0, 0.85], [22.0, 0.85], [23.0, 0.85], [24.0, 0.85], [26.0, 0.85], [27.0, 0.85], [28.0, 0.85]] },
+              60: { deg: [61, 84], rows: [[16.0, 0.65], [18.0, 0.65], [20.0, 0.64], [22.0, 0.62], [23.0, 0.61]] }
+            },
+            3: {
+              5: { deg: [39, 84], rows: [[6.5, 2.2], [7.0, 2.2], [8.0, 2.2], [9.0, 2.2], [10.0, 2.2], [11.0, 2.2], [12.0, 2.15], [13.0, 2.05], [14.0, 1.95], [16.0, 1.75], [18.0, 1.6], [20.0, 1.5], [22.0, 1.4], [23.0, 1.35], [24.0, 1.3], [26.0, 1.15], [27.0, 1.0], [28.0, 0.91], [30.0, 0.69], [32.0, 0.49], [33.0, 0.4], [34.0, 0.32]] },
+              25: { deg: [45, 84], rows: [[11.0, 1.3], [12.0, 1.3], [13.0, 1.3], [14.0, 1.3], [16.0, 1.25], [18.0, 1.2], [20.0, 1.15], [22.0, 1.1], [23.0, 1.05], [24.0, 1.05], [26.0, 1.0], [27.0, 0.97], [28.0, 0.94], [30.0, 0.85], [32.0, 0.63], [33.0, 0.53], [34.0, 0.43]] },
+              45: { deg: [45, 84], rows: [[16.0, 0.85], [18.0, 0.85], [20.0, 0.85], [22.0, 0.85], [23.0, 0.85], [24.0, 0.85], [26.0, 0.83], [27.0, 0.82], [28.0, 0.81], [30.0, 0.8], [32.0, 0.65], [33.0, 0.58], [34.0, 0.47]] },
+              60: { deg: [60, 84], rows: [[16.0, 0.65], [18.0, 0.65], [20.0, 0.64], [22.0, 0.62], [23.0, 0.61], [24.0, 0.6], [26.0, 0.6], [27.0, 0.6], [28.0, 0.6]] }
+            }
+          } }
+        ]
+      },
+      defaultRadius: "10.0",
+      data: {
+        2.5:  [25.0, 18.0, 12.5, null],
+        3.0:  [25.0, 18.0, 12.5, null],
+        3.5:  [25.0, 18.0, 12.5, 8.0],
+        4.0:  [23.5, 18.0, 12.5, 8.0],
+        4.5:  [21.5, 18.0, 12.5, 8.0],
+        5.0:  [19.6, 18.0, 12.5, 8.0],
+        5.5:  [17.8, 17.0, 12.5, 8.0],
+        6.0:  [16.3, 16.0, 12.5, 8.0],
+        6.5:  [15.1, 15.0, 12.25, 8.0],
+        7.0:  [null, 14.0, 11.5, 8.0],
+        8.0:  [null, 11.4, 10.2, 8.0],
+        9.0:  [null, 9.3, 9.0, 8.0],
+        10.0: [null, 7.8, 7.6, 7.15],
+        11.0: [null, 6.5, 6.65, 6.4],
+        12.0: [null, 5.55, 5.8, 5.6],
+        13.0: [null, 4.75, 5.0, 4.9],
+        13.5: [null, 4.45, 4.65, 4.6],
+        14.0: [null, null, 4.35, 4.4],
+        15.0: [null, null, 3.85, 3.9],
+        16.0: [null, null, 3.4, 3.45],
+        17.0: [null, null, 3.0, 3.05],
+        18.0: [null, null, 2.65, 2.7],
+        19.0: [null, null, 2.35, 2.4],
+        20.0: [null, null, 2.1, 2.15],
+        20.5: [null, null, 2.0, 2.05],
+        21.0: [null, null, null, 1.95],
+        22.0: [null, null, null, 1.75],
+        24.0: [null, null, null, 1.4],
+        26.0: [null, null, null, 1.1],
+        27.9: [null, null, null, 0.9]
+      }
+    }
+  };
+
+  // ★ 注文メールの送り先アドレス（例 "order@example.co.jp"）。空のままだと、宛先なしでメールが開きます。
+  var ORDER_MAIL_TO = "";
+  // ★ 自動送信の設定（メール送信サービスの「送信先URL」）。例 Formspree: "https://formspree.io/f/xxxxxxxx"
+  //    Web3Forms の場合は "https://api.web3forms.com/submit" と、下の ORDER_ACCESS_KEY にアクセスキーを入れます。
+  //    空のままだと「メールアプリで送る」方式になります。
+  var ORDER_ENDPOINT = "https://api.web3forms.com/submit";
+  var ORDER_ACCESS_KEY = "853833b9-003a-4a68-9a84-00657e7f2001";
+
+  CRANES["16"] = {
+    label: "16t", title: "16tクレーン 吊上げ能力計算", condition: "アウトリガ 最大張出 5.2m・全周", accent: "#f0a71a",
+    on: "#221a05",
+    pivot: { r0: -2.1, h0: 2.4, maxAngle: 82.5, verified: false },
+    boomLengths: [6.5, 10.7, 14.9, 19.3, 23.6, 28.0],
+    reeving: [6, 6, 4, 4, 4, 4],
+    maxRadius: [4.4, 8.6, 12.8, 17.0, 21.5, 24.5],   // 表の括弧付き半径（4.4 / 8.6 / 12.8 / 21.5m）と最終行
+    defaultRadius: "8.0",
+    // ジブ付き性能表（ブーム6.5 / 23.6 / 28.0m ＋ ジブ）。rows は [作業半径(m), 定格総荷重(t)]、deg はブーム角度の範囲
+    jib: {
+      options: [
+        { length: 4.5,
+          gridR: [3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 20.0, 22.0, 23.0, 24.0, 26.0],
+          booms: {
+            0: {
+              5: { deg: [0, 82.5], rows: [[3.0, 2.0], [3.5, 2.0], [4.0, 2.0], [4.5, 2.0], [5.0, 2.0], [5.5, 2.0], [6.0, 2.0], [6.5, 2.0], [7.0, 2.0], [7.5, 2.0], [8.0, 2.0], [9.0, 1.8]] },
+              25: { deg: [29, 82.5], rows: [[3.0, 2.0], [3.5, 2.0], [4.0, 2.0], [4.5, 2.0], [5.0, 2.0], [5.5, 2.0], [6.0, 2.0], [6.5, 2.0], [7.0, 2.0], [7.5, 2.0], [8.0, 1.8]] },
+              45: { deg: [42, 82.5], rows: [[3.5, 1.55], [4.0, 1.55], [4.5, 1.55], [5.0, 1.55], [5.5, 1.55], [6.0, 1.55], [6.5, 1.5], [7.0, 1.45], [7.5, 1.4]] },
+              60: { deg: [56, 82.5], rows: [[4.5, 1.18], [5.0, 1.15], [5.5, 1.12], [6.0, 1.1], [6.5, 1.1]] }
+            },
+            4: {
+              5: { deg: [24, 82.5], rows: [[4.0, 2.0], [4.5, 2.0], [5.0, 2.0], [5.5, 2.0], [6.0, 2.0], [6.5, 2.0], [7.0, 2.0], [7.5, 2.0], [8.0, 2.0], [9.0, 2.0], [10.0, 2.0], [11.0, 2.0], [12.0, 2.0], [13.0, 1.9], [14.0, 1.84], [15.0, 1.6], [16.0, 1.38], [17.0, 1.2], [18.0, 1.0], [20.0, 0.71], [22.0, 0.48], [23.0, 0.38], [24.0, 0.3]] },
+              25: { deg: [26, 82.5], rows: [[5.0, 2.0], [5.5, 2.0], [6.0, 2.0], [6.5, 2.0], [7.0, 2.0], [7.5, 2.0], [8.0, 2.0], [9.0, 1.95], [10.0, 1.9], [11.0, 1.85], [12.0, 1.8], [13.0, 1.75], [14.0, 1.7], [15.0, 1.55], [16.0, 1.4], [17.0, 1.28], [18.0, 1.1], [20.0, 0.79], [22.0, 0.54], [23.0, 0.4], [24.0, 0.32]] },
+              45: { deg: [45, 82.5], rows: [[6.5, 1.55], [7.0, 1.55], [7.5, 1.55], [8.0, 1.55], [9.0, 1.55], [10.0, 1.52], [11.0, 1.5], [12.0, 1.48], [13.0, 1.46], [14.0, 1.44], [15.0, 1.42], [16.0, 1.4], [17.0, 1.3], [18.0, 1.17], [20.0, 0.83]] },
+              60: { deg: [61, 82.5], rows: [[7.0, 1.19], [7.5, 1.18], [8.0, 1.17], [9.0, 1.16], [10.0, 1.15], [11.0, 1.13], [12.0, 1.1], [13.0, 1.1], [14.0, 1.1], [15.0, 1.1]] }
+            },
+            5: {
+              5: { deg: [34, 82.5], rows: [[4.5, 2.0], [5.0, 2.0], [5.5, 2.0], [6.0, 2.0], [6.5, 2.0], [7.0, 2.0], [7.5, 2.0], [8.0, 2.0], [9.0, 2.0], [10.0, 2.0], [11.0, 1.95], [12.0, 1.85], [13.0, 1.75], [14.0, 1.63], [15.0, 1.5], [16.0, 1.38], [17.0, 1.22], [18.0, 1.08], [20.0, 0.82], [22.0, 0.58], [23.0, 0.47], [24.0, 0.38], [26.0, 0.23]] },
+              25: { deg: [35, 82.5], rows: [[6.0, 2.0], [6.5, 2.0], [7.0, 2.0], [7.5, 1.95], [8.0, 1.9], [9.0, 1.85], [10.0, 1.75], [11.0, 1.7], [12.0, 1.6], [13.0, 1.55], [14.0, 1.45], [15.0, 1.36], [16.0, 1.28], [17.0, 1.22], [18.0, 1.15], [20.0, 0.9], [22.0, 0.64], [23.0, 0.52], [24.0, 0.42], [26.0, 0.26]] },
+              45: { deg: [46, 82.5], rows: [[7.0, 1.55], [7.5, 1.55], [8.0, 1.55], [9.0, 1.55], [10.0, 1.55], [11.0, 1.5], [12.0, 1.45], [13.0, 1.4], [14.0, 1.35], [15.0, 1.3], [16.0, 1.23], [17.0, 1.16], [18.0, 1.1], [20.0, 0.93], [22.0, 0.66], [23.0, 0.54]] },
+              60: { deg: [59, 82.5], rows: [[7.5, 1.2], [8.0, 1.19], [9.0, 1.18], [10.0, 1.17], [11.0, 1.15], [12.0, 1.13], [13.0, 1.11], [14.0, 1.1], [15.0, 1.1], [16.0, 1.1], [17.0, 1.1], [18.0, 1.1]] }
+            }
+          } },
+        { length: 6.9,
+          gridR: [3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 20.0, 22.0, 23.0, 24.0, 26.0, 28.0],
+          booms: {
+            0: {
+              5: { deg: [23, 82.5], rows: [[3.0, 1.5], [3.5, 1.5], [4.0, 1.5], [4.5, 1.5], [5.0, 1.5], [5.5, 1.45], [6.0, 1.35], [6.5, 1.25], [7.0, 1.15], [7.5, 1.05], [8.0, 1.0], [9.0, 0.85], [10.0, 0.75], [11.0, 0.65]] },
+              25: { deg: [30, 82.5], rows: [[4.0, 1.3], [4.5, 1.2], [5.0, 1.15], [5.5, 1.1], [6.0, 1.05], [6.5, 1.0], [7.0, 0.95], [7.5, 0.9], [8.0, 0.85], [9.0, 0.75], [10.0, 0.7], [11.0, 0.7]] },
+              45: { deg: [41, 82.5], rows: [[5.5, 0.82], [6.0, 0.82], [6.5, 0.8], [7.0, 0.78], [7.5, 0.76], [8.0, 0.74], [9.0, 0.7], [10.0, 0.68]] },
+              60: { deg: [55, 82.5], rows: [[6.5, 0.69], [7.0, 0.67], [7.5, 0.66], [8.0, 0.65], [9.0, 0.64]] }
+            },
+            4: {
+              5: { deg: [26, 82.5], rows: [[4.0, 1.5], [4.5, 1.5], [5.0, 1.5], [5.5, 1.5], [6.0, 1.5], [6.5, 1.5], [7.0, 1.5], [7.5, 1.5], [8.0, 1.5], [9.0, 1.5], [10.0, 1.5], [11.0, 1.5], [12.0, 1.45], [13.0, 1.4], [14.0, 1.33], [15.0, 1.23], [16.0, 1.15], [17.0, 1.07], [18.0, 1.03], [20.0, 0.86], [22.0, 0.63], [23.0, 0.52], [24.0, 0.44], [26.0, 0.28]] },
+              25: { deg: [28, 82.5], rows: [[6.5, 1.3], [7.0, 1.3], [7.5, 1.25], [8.0, 1.2], [9.0, 1.15], [10.0, 1.1], [11.0, 1.05], [12.0, 1.0], [13.0, 0.95], [14.0, 0.93], [15.0, 0.9], [16.0, 0.87], [17.0, 0.84], [18.0, 0.81], [20.0, 0.77], [22.0, 0.74], [23.0, 0.62], [24.0, 0.51], [26.0, 0.32]] },
+              45: { deg: [46, 82.5], rows: [[8.0, 0.82], [9.0, 0.82], [10.0, 0.8], [11.0, 0.78], [12.0, 0.76], [13.0, 0.74], [14.0, 0.73], [15.0, 0.72], [16.0, 0.7], [17.0, 0.69], [18.0, 0.68], [20.0, 0.67], [22.0, 0.67]] },
+              60: { deg: [62, 82.5], rows: [[9.0, 0.69], [10.0, 0.68], [11.0, 0.67], [12.0, 0.66], [13.0, 0.66], [14.0, 0.65], [15.0, 0.65], [16.0, 0.64], [17.0, 0.64]] }
+            },
+            5: {
+              5: { deg: [34, 82.5], rows: [[5.0, 1.5], [5.5, 1.5], [6.0, 1.5], [6.5, 1.5], [7.0, 1.5], [7.5, 1.5], [8.0, 1.5], [9.0, 1.5], [10.0, 1.5], [11.0, 1.5], [12.0, 1.5], [13.0, 1.45], [14.0, 1.4], [15.0, 1.32], [16.0, 1.25], [17.0, 1.17], [18.0, 1.08], [20.0, 0.9], [22.0, 0.7], [23.0, 0.6], [24.0, 0.5], [26.0, 0.33], [28.0, 0.2]] },
+              25: { deg: [37, 82.5], rows: [[7.5, 1.3], [8.0, 1.3], [9.0, 1.22], [10.0, 1.16], [11.0, 1.11], [12.0, 1.06], [13.0, 1.02], [14.0, 0.99], [15.0, 0.96], [16.0, 0.92], [17.0, 0.9], [18.0, 0.87], [20.0, 0.82], [22.0, 0.77], [23.0, 0.67], [24.0, 0.57], [26.0, 0.39], [28.0, 0.24]] },
+              45: { deg: [44, 82.5], rows: [[9.0, 0.82], [10.0, 0.82], [11.0, 0.8], [12.0, 0.78], [13.0, 0.76], [14.0, 0.75], [15.0, 0.74], [16.0, 0.73], [17.0, 0.72], [18.0, 0.71], [20.0, 0.69], [22.0, 0.68], [23.0, 0.67], [24.0, 0.61], [26.0, 0.42]] },
+              60: { deg: [61, 82.5], rows: [[10.0, 0.69], [11.0, 0.68], [12.0, 0.68], [13.0, 0.67], [14.0, 0.66], [15.0, 0.65], [16.0, 0.64], [17.0, 0.64], [18.0, 0.64], [20.0, 0.64]] }
+            }
+          } }
+      ]
+    },
+    data: {
+      2.5:    [16.0, 12.0, 9.0, 7.0, null, null],
+      3.0:    [16.0, 12.0, 9.0, 7.0, null, null],
+      3.5:    [14.0, 12.0, 9.0, 7.0, 5.0, 3.5],
+      4.0:    [12.5, 12.0, 9.0, 7.0, 5.0, 3.5],
+      4.5:    [11.7, 11.1, 9.0, 7.0, 5.0, 3.5],
+      5.0:    [null, 10.25, 8.9, 7.0, 5.0, 3.5],
+      5.5:    [null, 9.4, 8.2, 7.0, 5.0, 3.5],
+      6.0:    [null, 8.8, 7.6, 6.6, 5.0, 3.5],
+      7.0:    [null, 6.75, 6.5, 5.8, 4.8, 3.5],
+      8.0:    [null, 5.05, 4.95, 5.25, 4.25, 3.4],
+      9.0:    [null, 4.35, 3.9, 4.3, 3.75, 3.2],
+      10.0:   [null, null, 3.1, 3.45, 3.35, 2.9],
+      11.0:   [null, null, 2.5, 2.85, 3.05, 2.6],
+      12.0:   [null, null, 2.05, 2.4, 2.65, 2.4],
+      13.0:   [null, null, 1.75, 2.0, 2.25, 2.25],
+      14.0:   [null, null, null, 1.7, 1.95, 2.05],
+      15.0:   [null, null, null, 1.45, 1.65, 1.75],
+      16.0:   [null, null, null, 1.25, 1.45, 1.5],
+      17.0:   [null, null, null, 1.05, 1.25, 1.3],
+      18.0:   [null, null, null, null, 1.05, 1.15],
+      19.0:   [null, null, null, null, 0.9, 1.0],
+      20.0:   [null, null, null, null, 0.75, 0.85],
+      22.0:   [null, null, null, null, 0.55, 0.6],
+      24.5:   [null, null, null, null, null, 0.4]
+    }
+  };
+
+  CRANES["50"] = {
+    label: "50t", title: "50tクレーン 吊上げ能力計算", condition: "アウトリガ 最大張出 7.6m・全周", accent: "#e67e22",
+    // KATO SL-500RfIII 定格総荷重表。同じブーム長でも伸縮モード（A・B）で能力が違うため、別の選択肢にしています。
+    // 10.1m と 40.0m はモードA・B共通の1列です。ジブ付きは 40.0m ブーム＋ジブ9.4m のみ。
+    pivot: { r0: -2.5, h0: 3.0, maxAngle: 84, verified: false },
+    boomLengths: [10.1, 17.6, 17.6, 25.1, 25.0, 32.5, 32.5, 36.5, 36.5, 40.0],
+    boomModes:   [null, 1, 2, 1, 2, 1, 2, 1, 2, null],
+    modeMarks: ["", "A", "B"], modeNames: ["", "A", "B"],
+    reeving:     [12, 7, 4, 6, 4, 4, 4, 4, 4, 4],
+    boomNote: "m（A・Bは伸縮のモード）",
+    maxRadius: [7.0, 14.0, 14.0, 22.0, 22.0, 28.0, 28.0, 33.0, 33.0, 34.0],
+    jib: {
+      orderNote: "表の条件：アウトリガ「前方」",
+      note: "ジブ付きの表の条件は、アウトリガ「前方」と表記されています。全周で使えるか、取扱説明書で確認してください。",
+      options: [
+        { length: 9.4,
+          booms: {
+            9: {
+              5: { rows: [[5.6, 3.8, 84], [9.9, 3.8, 80], [12.8, 3.8, 77], [14.8, 3.8, 75], [17.4, 3.4, 72], [19.0, 3.05, 70], [21.3, 2.6, 67], [22.8, 2.35, 65], [25.0, 2.05, 62], [26.4, 1.85, 60], [28.5, 1.65, 57], [29.8, 1.5, 55], [31.7, 1.3, 52], [32.8, 1.1, 50], [33.9, 0.9, 48], [35.0, 0.7, 46], [36.0, 0.55, 44], [37.0, 0.45, 42]] },
+              25: { rows: [[9.0, 3.3, 84], [12.6, 3.05, 80], [15.2, 2.85, 77], [17.0, 2.7, 75], [19.4, 2.55, 72], [20.9, 2.4, 70], [23.1, 2.15, 67], [24.6, 1.95, 65], [26.6, 1.75, 62], [27.9, 1.65, 60], [29.8, 1.45, 57], [31.0, 1.35, 55], [32.9, 1.2, 52], [33.9, 1.05, 50], [35.0, 0.85, 48], [35.9, 0.7, 46], [36.9, 0.55, 44]] },
+              45: { rows: [[10.7, 2.1, 84], [14.0, 2.05, 80], [16.5, 1.95, 77], [18.1, 1.9, 75], [20.3, 1.9, 72], [21.8, 1.85, 70], [24.0, 1.8, 67], [25.4, 1.8, 65], [27.3, 1.65, 62], [28.5, 1.5, 60], [30.2, 1.4, 57], [31.4, 1.3, 55], [33.1, 1.2, 52], [34.1, 1.05, 50], [35.0, 0.85, 48], [35.9, 0.65, 46]] },
+              60: { rows: [[11.3, 1.5, 84], [14.5, 1.5, 80], [16.8, 1.45, 77], [18.3, 1.45, 75], [20.5, 1.45, 72], [21.9, 1.4, 70], [23.9, 1.4, 67], [25.2, 1.4, 65], [27.1, 1.4, 62]] }
+            }
+          } }
+      ]
+    },
+    defaultRadius: "10.0",
+    data: {
+          3.0: [50.0, 30.0, 14.0, 15.0, 12.5, null, null, null, null, null],
+          3.2: [45.0, 30.0, 14.0, 15.0, 12.5, 12.5, 7.5, null, null, null],
+          3.5: [41.0, 30.0, 14.0, 15.0, 12.5, 12.5, 7.5, 9.0, 7.5, null],
+          4.0: [37.0, 30.0, 14.0, 15.0, 12.5, 12.5, 7.5, 9.0, 7.5, null],
+          4.5: [33.5, 30.0, 14.0, 15.0, 12.5, 12.5, 7.5, 9.0, 7.5, 7.5],
+          5.0: [30.2, 28.0, 14.0, 15.0, 12.5, 12.5, 7.5, 9.0, 7.5, 7.5],
+          5.5: [27.5, 26.1, 14.0, 15.0, 12.5, 12.5, 7.5, 9.0, 7.5, 7.5],
+          6.0: [25.0, 24.4, 14.0, 15.0, 12.5, 12.5, 7.5, 9.0, 7.5, 7.5],
+          6.5: [22.7, 22.4, 14.0, 15.0, 12.5, 12.5, 7.5, 9.0, 7.5, 7.5],
+          7.0: [20.7, 20.6, 14.0, 15.0, 11.95, 12.5, 7.5, 9.0, 7.5, 7.5],
+          7.5: [null, 18.9, 14.0, 15.0, 11.35, 12.5, 7.5, 9.0, 7.5, 7.5],
+          8.0: [null, 17.5, 14.0, 15.0, 10.7, 12.5, 7.5, 9.0, 7.5, 7.5],
+          8.5: [null, 16.2, 14.0, 15.0, 10.15, 12.5, 7.5, 9.0, 7.5, 7.5],
+          9.0: [null, 15.0, 13.8, 14.5, 9.65, 12.5, 7.5, 9.0, 7.5, 7.5],
+         10.0: [null, 12.3, 12.8, 13.2, 8.8, 11.65, 6.9, 9.0, 7.5, 7.5],
+         11.0: [null, 10.05, 11.8, 11.2, 8.05, 10.7, 6.25, 9.0, 7.2, 7.5],
+         12.0: [null, 8.35, 10.25, 9.4, 7.4, 9.85, 5.7, 8.55, 6.6, 7.4],
+         13.0: [null, 7.0, 8.85, 8.0, 6.85, 8.6, 5.25, 7.9, 6.05, 6.85],
+         14.0: [null, 5.9, 7.7, 6.9, 6.35, 7.45, 4.85, 7.35, 5.6, 6.35],
+         15.0: [null, null, null, 6.0, 5.9, 6.55, 4.45, 6.7, 5.2, 5.9],
+         16.0: [null, null, null, 5.25, 5.5, 5.75, 4.15, 5.9, 4.8, 5.5],
+         17.0: [null, null, null, 4.6, 5.2, 5.1, 3.85, 5.25, 4.5, 5.15],
+         18.0: [null, null, null, 4.0, 4.85, 4.6, 3.6, 4.65, 4.2, 4.8],
+         19.0: [null, null, null, 3.5, 4.6, 4.0, 3.35, 4.15, 3.9, 4.3],
+         20.0: [null, null, null, 3.05, 4.25, 3.55, 3.15, 3.75, 3.7, 3.9],
+         21.0: [null, null, null, 2.65, 3.85, 3.15, 2.95, 3.3, 3.45, 3.45],
+         22.0: [null, null, null, 2.3, 3.5, 2.8, 2.75, 2.95, 3.25, 3.1],
+         24.0: [null, null, null, null, null, 2.15, 2.45, 2.35, 2.7, 2.45],
+         26.0: [null, null, null, null, null, 1.65, 2.2, 1.8, 2.2, 1.95],
+         28.0: [null, null, null, null, null, 1.15, 1.95, 1.4, 1.75, 1.5],
+         30.0: [null, null, null, null, null, null, null, 1.0, 1.4, 1.1],
+         32.0: [null, null, null, null, null, null, null, 0.7, 1.1, 0.8],
+         33.0: [null, null, null, null, null, null, null, 0.55, 1.0, 0.65],
+         34.0: [null, null, null, null, null, null, null, null, null, 0.5]
+    }
+  };
+  CRANES["70"] = {
+    label: "70t", title: "70tクレーン 吊上げ能力計算", condition: "アウトリガ 最大張出 7.8m・全周", accent: "#2f9e6e",
+    // 同じブーム長でも、伸縮の仕方（モード1・2）で能力が違うため、別の選択肢にしています（①＝モード1、②＝モード2）。
+    // 9.8mブームの※付きの値（重荷重装置が必要）は含めていません。
+    // ジブ付き表は 9.8 / 37.2①② / 41.2①② / 44.0m ブームのみ（ジブ8.4m・13.1m、e-PACK装着時）。
+    pivot: { r0: -3.0, h0: 3.0, maxAngle: 84, verified: false },
+    boomLengths: [9.8, 16.6, 16.6, 23.5, 23.5, 30.3, 30.3, 37.2, 37.2, 41.2, 41.2, 44.0],
+    boomModes:   [null, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, null],
+    reeving:     [8, 8, 4, 6, 4, 4, 4, 4, 4, 4, 4, 4],
+    boomNote: "m（①②は伸縮のモード1・2）",
+    maxRadius: [6.5, 13.0, 13.0, 20.0, 20.0, 27.0, 27.0, 34.0, 34.0, 35.0, 38.0, 36.0],
+    jib: {
+      orderNote: "表の条件：e-PACK装着時",
+      note: "ジブ付きの表は、e-PACK装着時の値です。e-PACKの有無は車両・取扱説明書で確認してください。",
+      options: [
+        { length: 8.4,
+          gridR: [3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 24.0, 26.0, 28.0, 30.0, 31.0, 32.0, 33.0, 34.0, 35.0, 36.0, 37.0, 38.0, 40.0, 42.0, 44.0, 46.0, 48.0],
+          booms: {
+            0: {
+              5: { deg: [14, 84], rows: [[3.0, 4.0], [4.0, 4.0], [5.0, 4.0], [6.0, 4.0], [7.0, 3.65], [8.0, 3.3], [9.0, 3.0], [10.0, 2.75], [11.0, 2.55], [12.0, 2.35], [13.0, 2.2], [14.0, 2.05]] },
+              25: { deg: [24, 84], rows: [[4.0, 3.5], [5.0, 3.5], [6.0, 3.3], [7.0, 3.0], [8.0, 2.8], [9.0, 2.6], [10.0, 2.4], [11.0, 2.3], [12.0, 2.15], [13.0, 2.05], [14.0, 2.0]] },
+              45: { deg: [44, 84], rows: [[7.0, 2.2], [8.0, 2.2], [9.0, 2.1], [10.0, 2.0], [11.0, 1.95], [12.0, 1.9], [13.0, 1.85]] },
+              60: { deg: [60, 84], rows: [[8.0, 1.4], [9.0, 1.4], [10.0, 1.4], [11.0, 1.4]] }
+            },
+            7: {
+              5: { deg: [23, 84], rows: [[8.0, 4.0], [9.0, 4.0], [10.0, 4.0], [11.0, 4.0], [12.0, 4.0], [13.0, 4.0], [14.0, 3.8], [16.0, 3.4], [17.0, 3.25], [18.0, 3.1], [19.0, 2.95], [20.0, 2.8], [21.0, 2.7], [22.0, 2.6], [24.0, 2.35], [26.0, 2.2], [28.0, 1.95], [30.0, 1.7], [31.0, 1.55], [32.0, 1.45], [33.0, 1.35], [34.0, 1.25], [35.0, 1.15], [36.0, 1.05], [37.0, 0.95], [38.0, 0.85], [40.0, 0.65]] },
+              25: { deg: [24, 84], rows: [[10.0, 3.5], [11.0, 3.5], [12.0, 3.5], [13.0, 3.4], [14.0, 3.3], [16.0, 3.05], [17.0, 2.9], [18.0, 2.8], [19.0, 2.7], [20.0, 2.65], [21.0, 2.55], [22.0, 2.5], [24.0, 2.35], [26.0, 2.2], [28.0, 1.9], [30.0, 1.65], [31.0, 1.55], [32.0, 1.45], [33.0, 1.3], [34.0, 1.2], [35.0, 1.15], [36.0, 1.05], [37.0, 0.95], [38.0, 0.85], [40.0, 0.7]] },
+              45: { deg: [45, 84], rows: [[12.0, 2.2], [13.0, 2.2], [14.0, 2.2], [16.0, 2.2], [17.0, 2.15], [18.0, 2.15], [19.0, 2.1], [20.0, 2.05], [21.0, 2.05], [22.0, 2.0], [24.0, 1.9], [26.0, 1.85], [28.0, 1.8], [30.0, 1.65], [31.0, 1.55], [32.0, 1.4], [33.0, 1.3]] },
+              60: { deg: [59, 84], rows: [[13.0, 1.4], [14.0, 1.4], [16.0, 1.4], [17.0, 1.4], [18.0, 1.4], [19.0, 1.4], [20.0, 1.4], [21.0, 1.4], [22.0, 1.4], [24.0, 1.4], [26.0, 1.4]] }
+            },
+            8: {
+              5: { deg: [14, 84], rows: [[8.0, 4.0], [9.0, 4.0], [10.0, 4.0], [11.0, 4.0], [12.0, 4.0], [13.0, 4.0], [14.0, 3.8], [16.0, 3.4], [17.0, 3.25], [18.0, 3.1], [19.0, 2.95], [20.0, 2.8], [21.0, 2.7], [22.0, 2.55], [24.0, 2.25], [26.0, 2.0], [28.0, 1.7], [30.0, 1.5], [31.0, 1.35], [32.0, 1.25], [33.0, 1.15], [34.0, 1.1], [35.0, 1.0], [36.0, 0.9], [37.0, 0.85], [38.0, 0.75], [40.0, 0.65], [42.0, 0.5]] },
+              25: { deg: [24, 84], rows: [[10.0, 3.5], [11.0, 3.5], [12.0, 3.5], [13.0, 3.4], [14.0, 3.3], [16.0, 3.05], [17.0, 2.9], [18.0, 2.8], [19.0, 2.65], [20.0, 2.55], [21.0, 2.4], [22.0, 2.3], [24.0, 2.15], [26.0, 1.9], [28.0, 1.7], [30.0, 1.5], [31.0, 1.4], [32.0, 1.3], [33.0, 1.2], [34.0, 1.1], [35.0, 1.05], [36.0, 0.95], [37.0, 0.85], [38.0, 0.8], [40.0, 0.65]] },
+              45: { deg: [45, 84], rows: [[12.0, 2.2], [13.0, 2.2], [14.0, 2.2], [16.0, 2.2], [17.0, 2.15], [18.0, 2.15], [19.0, 2.1], [20.0, 2.05], [21.0, 2.05], [22.0, 2.0], [24.0, 1.9], [26.0, 1.85], [28.0, 1.7], [30.0, 1.5], [31.0, 1.4], [32.0, 1.3], [33.0, 1.2]] },
+              60: { deg: [59, 84], rows: [[13.0, 1.4], [14.0, 1.4], [16.0, 1.4], [17.0, 1.4], [18.0, 1.4], [19.0, 1.4], [20.0, 1.4], [21.0, 1.4], [22.0, 1.4], [24.0, 1.4], [26.0, 1.4]] }
+            },
+            9: {
+              5: { deg: [29, 84], rows: [[9.0, 4.0], [10.0, 4.0], [11.0, 4.0], [12.0, 4.0], [13.0, 4.0], [14.0, 4.0], [16.0, 3.75], [17.0, 3.55], [18.0, 3.35], [19.0, 3.2], [20.0, 3.1], [21.0, 2.95], [22.0, 2.85], [24.0, 2.6], [26.0, 2.4], [28.0, 2.2], [30.0, 1.9], [31.0, 1.75], [32.0, 1.6], [33.0, 1.5], [34.0, 1.4], [35.0, 1.25], [36.0, 1.15], [37.0, 1.05], [38.0, 0.95], [40.0, 0.7], [42.0, 0.45]] },
+              25: { deg: [31, 84], rows: [[11.0, 3.5], [12.0, 3.5], [13.0, 3.5], [14.0, 3.45], [16.0, 3.2], [17.0, 3.1], [18.0, 3.0], [19.0, 2.9], [20.0, 2.8], [21.0, 2.7], [22.0, 2.6], [24.0, 2.45], [26.0, 2.35], [28.0, 2.2], [30.0, 2.0], [31.0, 1.85], [32.0, 1.7], [33.0, 1.6], [34.0, 1.45], [35.0, 1.35], [36.0, 1.25], [37.0, 1.15], [38.0, 1.0], [40.0, 0.8], [42.0, 0.5]] },
+              45: { deg: [46, 84], rows: [[13.0, 2.2], [14.0, 2.2], [16.0, 2.2], [17.0, 2.2], [18.0, 2.15], [19.0, 2.1], [20.0, 2.1], [21.0, 2.05], [22.0, 2.05], [24.0, 1.95], [26.0, 1.9], [28.0, 1.85], [30.0, 1.8], [31.0, 1.75], [32.0, 1.7], [33.0, 1.6], [34.0, 1.45], [35.0, 1.35], [36.0, 1.25]] },
+              60: { deg: [60, 84], rows: [[14.0, 1.4], [16.0, 1.4], [17.0, 1.4], [18.0, 1.4], [19.0, 1.4], [20.0, 1.4], [21.0, 1.4], [22.0, 1.4], [24.0, 1.4], [26.0, 1.4], [28.0, 1.4]] }
+            },
+            10: {
+              5: { deg: [23, 84], rows: [[9.0, 4.0], [10.0, 4.0], [11.0, 4.0], [12.0, 4.0], [13.0, 4.0], [14.0, 4.0], [16.0, 3.75], [17.0, 3.55], [18.0, 3.35], [19.0, 3.2], [20.0, 3.1], [21.0, 2.95], [22.0, 2.8], [24.0, 2.5], [26.0, 2.25], [28.0, 2.0], [30.0, 1.75], [31.0, 1.65], [32.0, 1.5], [33.0, 1.4], [34.0, 1.35], [35.0, 1.25], [36.0, 1.15], [37.0, 1.05], [38.0, 1.0], [40.0, 0.85], [42.0, 0.65], [44.0, 0.4]] },
+              25: { deg: [24, 84], rows: [[11.0, 3.5], [12.0, 3.5], [13.0, 3.5], [14.0, 3.45], [16.0, 3.2], [17.0, 3.1], [18.0, 3.0], [19.0, 2.85], [20.0, 2.75], [21.0, 2.65], [22.0, 2.5], [24.0, 2.3], [26.0, 2.1], [28.0, 1.9], [30.0, 1.7], [31.0, 1.65], [32.0, 1.55], [33.0, 1.45], [34.0, 1.35], [35.0, 1.25], [36.0, 1.2], [37.0, 1.1], [38.0, 1.0], [40.0, 0.9], [42.0, 0.75], [44.0, 0.45]] },
+              45: { deg: [46, 84], rows: [[13.0, 2.2], [14.0, 2.2], [16.0, 2.2], [17.0, 2.2], [18.0, 2.15], [19.0, 2.1], [20.0, 2.1], [21.0, 2.05], [22.0, 2.05], [24.0, 1.95], [26.0, 1.9], [28.0, 1.85], [30.0, 1.7], [31.0, 1.65], [32.0, 1.55], [33.0, 1.45], [34.0, 1.4], [35.0, 1.3], [36.0, 1.2]] },
+              60: { deg: [60, 84], rows: [[14.0, 1.4], [16.0, 1.4], [17.0, 1.4], [18.0, 1.4], [19.0, 1.4], [20.0, 1.4], [21.0, 1.4], [22.0, 1.4], [24.0, 1.4], [26.0, 1.4], [28.0, 1.4]] }
+            },
+            11: {
+              5: { deg: [36, 84], rows: [[9.0, 4.0], [10.0, 4.0], [11.0, 4.0], [12.0, 4.0], [13.0, 4.0], [14.0, 3.95], [16.0, 3.6], [17.0, 3.45], [18.0, 3.35], [19.0, 3.2], [20.0, 3.1], [21.0, 2.95], [22.0, 2.85], [24.0, 2.7], [26.0, 2.5], [28.0, 2.25], [30.0, 2.0], [31.0, 1.85], [32.0, 1.7], [33.0, 1.6], [34.0, 1.45], [35.0, 1.3], [36.0, 1.2], [37.0, 1.1], [38.0, 0.95], [40.0, 0.75], [42.0, 0.5]] },
+              25: { deg: [38, 84], rows: [[12.0, 3.5], [13.0, 3.5], [14.0, 3.45], [16.0, 3.3], [17.0, 3.15], [18.0, 3.05], [19.0, 2.95], [20.0, 2.85], [21.0, 2.75], [22.0, 2.7], [24.0, 2.5], [26.0, 2.3], [28.0, 2.1], [30.0, 1.9], [31.0, 1.8], [32.0, 1.7], [33.0, 1.65], [34.0, 1.55], [35.0, 1.4], [36.0, 1.3], [37.0, 1.2], [38.0, 1.05], [40.0, 0.85], [42.0, 0.6]] },
+              45: { deg: [46, 84], rows: [[14.0, 2.2], [16.0, 2.2], [17.0, 2.2], [18.0, 2.2], [19.0, 2.15], [20.0, 2.1], [21.0, 2.1], [22.0, 2.05], [24.0, 2.0], [26.0, 1.95], [28.0, 1.9], [30.0, 1.8], [31.0, 1.75], [32.0, 1.7], [33.0, 1.6], [34.0, 1.55], [35.0, 1.4], [36.0, 1.3], [37.0, 1.2], [38.0, 1.1]] },
+              60: { deg: [60, 84], rows: [[14.0, 1.4], [16.0, 1.4], [17.0, 1.4], [18.0, 1.4], [19.0, 1.4], [20.0, 1.4], [21.0, 1.4], [22.0, 1.4], [24.0, 1.4], [26.0, 1.4], [28.0, 1.4], [30.0, 1.4]] }
+            }
+          } },
+        { length: 13.1,
+          gridR: [3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 24.0, 26.0, 28.0, 30.0, 31.0, 32.0, 33.0, 34.0, 35.0, 36.0, 37.0, 38.0, 40.0, 42.0, 44.0, 46.0, 48.0],
+          booms: {
+            0: {
+              5: { deg: [19, 84], rows: [[3.0, 2.8], [4.0, 2.8], [5.0, 2.8], [6.0, 2.8], [7.0, 2.8], [8.0, 2.8], [9.0, 2.6], [10.0, 2.4], [11.0, 2.15], [12.0, 1.95], [13.0, 1.75], [14.0, 1.6], [16.0, 1.35], [17.0, 1.25], [18.0, 1.15], [19.0, 1.05]] },
+              25: { deg: [25, 84], rows: [[7.0, 2.4], [8.0, 2.3], [9.0, 2.2], [10.0, 2.05], [11.0, 1.9], [12.0, 1.7], [13.0, 1.6], [14.0, 1.45], [16.0, 1.25], [17.0, 1.2], [18.0, 1.1], [19.0, 1.05]] },
+              45: { deg: [45, 84], rows: [[11.0, 1.5], [12.0, 1.45], [13.0, 1.4], [14.0, 1.35], [16.0, 1.25], [17.0, 1.2]] },
+              60: { deg: [60, 84], rows: [[12.0, 0.7], [13.0, 0.7], [14.0, 0.7], [16.0, 0.7]] }
+            },
+            7: {
+              5: { deg: [25, 84], rows: [[9.0, 2.8], [10.0, 2.8], [11.0, 2.8], [12.0, 2.8], [13.0, 2.8], [14.0, 2.8], [16.0, 2.75], [17.0, 2.7], [18.0, 2.65], [19.0, 2.6], [20.0, 2.45], [21.0, 2.3], [22.0, 2.15], [24.0, 1.95], [26.0, 1.75], [28.0, 1.55], [30.0, 1.45], [31.0, 1.35], [32.0, 1.3], [33.0, 1.25], [34.0, 1.2], [35.0, 1.15], [36.0, 1.05], [37.0, 1.0], [38.0, 0.9], [40.0, 0.8], [42.0, 0.65], [44.0, 0.5]] },
+              25: { deg: [26, 84], rows: [[13.0, 2.35], [14.0, 2.3], [16.0, 2.2], [17.0, 2.15], [18.0, 2.1], [19.0, 2.05], [20.0, 1.95], [21.0, 1.9], [22.0, 1.85], [24.0, 1.75], [26.0, 1.65], [28.0, 1.5], [30.0, 1.4], [31.0, 1.35], [32.0, 1.3], [33.0, 1.25], [34.0, 1.2], [35.0, 1.15], [36.0, 1.1], [37.0, 1.05], [38.0, 0.95], [40.0, 0.8], [42.0, 0.65], [44.0, 0.55]] },
+              45: { deg: [44, 84], rows: [[16.0, 1.45], [17.0, 1.45], [18.0, 1.4], [19.0, 1.4], [20.0, 1.35], [21.0, 1.35], [22.0, 1.3], [24.0, 1.25], [26.0, 1.25], [28.0, 1.2], [30.0, 1.15], [31.0, 1.15], [32.0, 1.15], [33.0, 1.1], [34.0, 1.1], [35.0, 1.05], [36.0, 1.05], [37.0, 1.05], [38.0, 0.95]] },
+              60: { deg: [61, 84], rows: [[17.0, 0.7], [18.0, 0.7], [19.0, 0.7], [20.0, 0.7], [21.0, 0.7], [22.0, 0.7], [24.0, 0.7], [26.0, 0.7], [28.0, 0.7], [30.0, 0.7]] }
+            },
+            8: {
+              5: { deg: [25, 84], rows: [[9.0, 2.8], [10.0, 2.8], [11.0, 2.8], [12.0, 2.8], [13.0, 2.8], [14.0, 2.8], [16.0, 2.75], [17.0, 2.7], [18.0, 2.65], [19.0, 2.6], [20.0, 2.45], [21.0, 2.3], [22.0, 2.15], [24.0, 1.95], [26.0, 1.75], [28.0, 1.55], [30.0, 1.45], [31.0, 1.35], [32.0, 1.25], [33.0, 1.2], [34.0, 1.1], [35.0, 1.0], [36.0, 0.95], [37.0, 0.85], [38.0, 0.8], [40.0, 0.7], [42.0, 0.55], [44.0, 0.45]] },
+              25: { deg: [26, 84], rows: [[13.0, 2.35], [14.0, 2.3], [16.0, 2.2], [17.0, 2.15], [18.0, 2.1], [19.0, 2.05], [20.0, 1.95], [21.0, 1.9], [22.0, 1.85], [24.0, 1.75], [26.0, 1.65], [28.0, 1.5], [30.0, 1.4], [31.0, 1.35], [32.0, 1.3], [33.0, 1.25], [34.0, 1.15], [35.0, 1.1], [36.0, 1.0], [37.0, 0.95], [38.0, 0.9], [40.0, 0.75], [42.0, 0.6], [44.0, 0.5]] },
+              45: { deg: [44, 84], rows: [[16.0, 1.45], [17.0, 1.45], [18.0, 1.4], [19.0, 1.4], [20.0, 1.35], [21.0, 1.35], [22.0, 1.3], [24.0, 1.25], [26.0, 1.25], [28.0, 1.2], [30.0, 1.15], [31.0, 1.15], [32.0, 1.15], [33.0, 1.1], [34.0, 1.1], [35.0, 1.05], [36.0, 1.0], [37.0, 0.95], [38.0, 0.85]] },
+              60: { deg: [61, 84], rows: [[17.0, 0.7], [18.0, 0.7], [19.0, 0.7], [20.0, 0.7], [21.0, 0.7], [22.0, 0.7], [24.0, 0.7], [26.0, 0.7], [28.0, 0.7], [30.0, 0.7]] }
+            },
+            9: {
+              5: { deg: [35, 84], rows: [[10.0, 2.8], [11.0, 2.8], [12.0, 2.8], [13.0, 2.8], [14.0, 2.8], [16.0, 2.8], [17.0, 2.8], [18.0, 2.75], [19.0, 2.7], [20.0, 2.6], [21.0, 2.55], [22.0, 2.5], [24.0, 2.2], [26.0, 2.0], [28.0, 1.8], [30.0, 1.65], [31.0, 1.55], [32.0, 1.5], [33.0, 1.45], [34.0, 1.35], [35.0, 1.3], [36.0, 1.25], [37.0, 1.2], [38.0, 1.1], [40.0, 0.95], [42.0, 0.75], [44.0, 0.6]] },
+              25: { deg: [33, 84], rows: [[14.0, 2.35], [16.0, 2.25], [17.0, 2.2], [18.0, 2.15], [19.0, 2.1], [20.0, 2.05], [21.0, 2.0], [22.0, 1.95], [24.0, 1.85], [26.0, 1.75], [28.0, 1.65], [30.0, 1.5], [31.0, 1.45], [32.0, 1.4], [33.0, 1.35], [34.0, 1.3], [35.0, 1.25], [36.0, 1.25], [37.0, 1.2], [38.0, 1.15], [40.0, 1.0], [42.0, 0.85], [44.0, 0.65], [46.0, 0.5]] },
+              45: { deg: [46, 84], rows: [[17.0, 1.45], [18.0, 1.45], [19.0, 1.4], [20.0, 1.4], [21.0, 1.35], [22.0, 1.35], [24.0, 1.3], [26.0, 1.25], [28.0, 1.25], [30.0, 1.2], [31.0, 1.2], [32.0, 1.15], [33.0, 1.15], [34.0, 1.15], [35.0, 1.15], [36.0, 1.1], [37.0, 1.1], [38.0, 1.05], [40.0, 0.95]] },
+              60: { deg: [59, 84], rows: [[18.0, 0.7], [19.0, 0.7], [20.0, 0.7], [21.0, 0.7], [22.0, 0.7], [24.0, 0.7], [26.0, 0.7], [28.0, 0.7], [30.0, 0.7], [31.0, 0.7], [32.0, 0.7], [33.0, 0.7]] }
+            },
+            10: {
+              5: { deg: [31, 84], rows: [[10.0, 2.8], [11.0, 2.8], [12.0, 2.8], [13.0, 2.8], [14.0, 2.8], [16.0, 2.8], [17.0, 2.8], [18.0, 2.75], [19.0, 2.7], [20.0, 2.6], [21.0, 2.55], [22.0, 2.5], [24.0, 2.2], [26.0, 2.0], [28.0, 1.8], [30.0, 1.65], [31.0, 1.55], [32.0, 1.45], [33.0, 1.4], [34.0, 1.3], [35.0, 1.2], [36.0, 1.15], [37.0, 1.05], [38.0, 1.0], [40.0, 0.85], [42.0, 0.75], [44.0, 0.65], [46.0, 0.55]] },
+              25: { deg: [25, 84], rows: [[14.0, 2.35], [16.0, 2.25], [17.0, 2.2], [18.0, 2.15], [19.0, 2.1], [20.0, 2.05], [21.0, 2.0], [22.0, 1.95], [24.0, 1.85], [26.0, 1.75], [28.0, 1.65], [30.0, 1.5], [31.0, 1.45], [32.0, 1.4], [33.0, 1.35], [34.0, 1.3], [35.0, 1.25], [36.0, 1.15], [37.0, 1.1], [38.0, 1.05], [40.0, 0.9], [42.0, 0.8], [44.0, 0.7], [46.0, 0.55], [48.0, 0.45]] },
+              45: { deg: [46, 84], rows: [[17.0, 1.45], [18.0, 1.45], [19.0, 1.4], [20.0, 1.4], [21.0, 1.35], [22.0, 1.35], [24.0, 1.3], [26.0, 1.25], [28.0, 1.25], [30.0, 1.2], [31.0, 1.2], [32.0, 1.15], [33.0, 1.15], [34.0, 1.15], [35.0, 1.15], [36.0, 1.1], [37.0, 1.1], [38.0, 1.05], [40.0, 0.95]] },
+              60: { deg: [59, 84], rows: [[18.0, 0.7], [19.0, 0.7], [20.0, 0.7], [21.0, 0.7], [22.0, 0.7], [24.0, 0.7], [26.0, 0.7], [28.0, 0.7], [30.0, 0.7], [31.0, 0.7], [32.0, 0.7], [33.0, 0.7]] }
+            },
+            11: {
+              5: { deg: [37, 84], rows: [[11.0, 2.8], [12.0, 2.8], [13.0, 2.8], [14.0, 2.8], [16.0, 2.8], [17.0, 2.8], [18.0, 2.8], [19.0, 2.75], [20.0, 2.7], [21.0, 2.65], [22.0, 2.6], [24.0, 2.4], [26.0, 2.2], [28.0, 1.95], [30.0, 1.8], [31.0, 1.7], [32.0, 1.65], [33.0, 1.55], [34.0, 1.5], [35.0, 1.4], [36.0, 1.3], [37.0, 1.2], [38.0, 1.1], [40.0, 0.9], [42.0, 0.75], [44.0, 0.55], [46.0, 0.4]] },
+              25: { deg: [39, 84], rows: [[16.0, 2.3], [17.0, 2.25], [18.0, 2.2], [19.0, 2.15], [20.0, 2.1], [21.0, 2.05], [22.0, 2.0], [24.0, 1.9], [26.0, 1.8], [28.0, 1.7], [30.0, 1.6], [31.0, 1.55], [32.0, 1.5], [33.0, 1.45], [34.0, 1.4], [35.0, 1.35], [36.0, 1.3], [37.0, 1.2], [38.0, 1.15], [40.0, 1.05], [42.0, 0.9], [44.0, 0.7], [46.0, 0.55]] },
+              45: { deg: [44, 84], rows: [[18.0, 1.4], [19.0, 1.4], [20.0, 1.35], [21.0, 1.35], [22.0, 1.35], [24.0, 1.3], [26.0, 1.25], [28.0, 1.25], [30.0, 1.2], [31.0, 1.2], [32.0, 1.2], [33.0, 1.15], [34.0, 1.15], [35.0, 1.15], [36.0, 1.15], [37.0, 1.1], [38.0, 1.1], [40.0, 1.05], [42.0, 0.9], [44.0, 0.7]] },
+              60: { deg: [59, 84], rows: [[19.0, 0.7], [20.0, 0.7], [21.0, 0.7], [22.0, 0.7], [24.0, 0.7], [26.0, 0.7], [28.0, 0.7], [30.0, 0.7], [31.0, 0.7], [32.0, 0.7], [33.0, 0.7], [34.0, 0.7], [35.0, 0.7]] }
+            }
+          } }
+      ]
+    },
+    defaultRadius: "10.0",
+    data: {
+      2.8:  [null, 32.0, 12.5, 24.0, 12.0, 12.5, 10.0, null, null, null, null, null],
+      3.0:  [null, 32.0, 12.5, 24.0, 12.0, 12.5, 10.0, null, null, null, null, null],
+      3.5:  [null, 32.0, 12.5, 24.0, 12.0, 12.5, 10.0, 12.0, 10.0, null, null, null],
+      4.0:  [null, 32.0, 12.5, 24.0, 12.0, 12.5, 10.0, 12.0, 10.0, 10.0, 9.0, null],
+      4.5:  [null, 32.0, 12.5, 24.0, 12.0, 12.5, 10.0, 12.0, 10.0, 10.0, 9.0, 8.2],
+      5.0:  [null, 32.0, 12.5, 24.0, 12.0, 12.5, 10.0, 12.0, 10.0, 10.0, 9.0, 8.2],
+      5.5:  [null, 32.0, 12.5, 24.0, 12.0, 12.5, 10.0, 12.0, 10.0, 10.0, 9.0, 8.2],
+      6.0:  [32.4, 31.3, 12.5, 23.6, 12.0, 12.5, 10.0, 12.0, 10.0, 10.0, 9.0, 8.2],
+      6.5:  [29.3, 29.0, 12.5, 22.1, 12.0, 12.5, 10.0, 12.0, 10.0, 10.0, 9.0, 8.2],
+      7.0:  [null, 26.4, 12.5, 20.7, 12.0, 12.5, 9.75, 12.0, 10.0, 10.0, 9.0, 8.2],
+      8.0:  [null, 22.1, 12.5, 18.4, 12.0, 12.5, 8.85, 12.0, 10.0, 10.0, 9.0, 8.2],
+      9.0:  [null, 18.9, 12.5, 16.5, 11.2, 12.5, 8.05, 12.0, 10.0, 10.0, 9.0, 8.2],
+      10.0:  [null, 15.1, 12.5, 14.9, 10.3, 12.5, 7.4, 12.0, 9.3, 10.0, 9.0, 8.2],
+      11.0:  [null, 12.4, 12.5, 12.2, 9.5, 12.5, 6.9, 11.4, 8.65, 10.0, 9.0, 8.2],
+      12.0:  [null, 10.4, 12.5, 10.3, 8.75, 11.1, 6.55, 10.5, 8.0, 9.75, 8.65, 8.2],
+      13.0:  [null, 8.9, 10.9, 8.7, 8.15, 9.65, 6.2, 9.75, 7.45, 9.05, 8.1, 8.2],
+      14.0:  [null, null, null, 7.45, 7.6, 8.4, 5.85, 8.95, 6.95, 8.4, 7.55, 7.95],
+      15.0:  [null, null, null, 6.4, 7.1, 7.3, 5.5, 7.85, 6.5, 7.85, 7.1, 7.4],
+      16.0:  [null, null, null, 5.5, 6.65, 6.4, 5.15, 6.9, 6.05, 7.1, 6.65, 6.9],
+      17.0:  [null, null, null, 4.75, 6.3, 5.6, 4.85, 6.1, 5.7, 6.35, 6.3, 6.45],
+      18.0:  [null, null, null, 4.05, 5.9, 4.95, 4.6, 5.45, 5.35, 5.65, 5.8, 5.7],
+      19.0:  [null, null, null, 3.5, 5.6, 4.35, 4.35, 4.8, 5.05, 5.0, 5.25, 5.15],
+      20.0:  [null, null, null, 3.0, 5.35, 3.8, 4.1, 4.3, 4.8, 4.5, 4.75, 4.6],
+      22.0:  [null, null, null, null, null, 2.95, 3.65, 3.4, 4.0, 3.6, 3.85, 3.75],
+      24.0:  [null, null, null, null, null, 2.25, 3.3, 2.7, 3.35, 2.9, 3.15, 3.05],
+      25.0:  [null, null, null, null, null, 1.95, 3.15, 2.4, 3.1, 2.6, 2.85, 2.7],
+      26.0:  [null, null, null, null, null, 1.7, 3.0, 2.15, 2.8, 2.3, 2.55, 2.4],
+      27.0:  [null, null, null, null, null, 1.45, 2.9, 1.9, 2.55, 2.05, 2.3, 2.15],
+      28.0:  [null, null, null, null, null, null, null, 1.65, 2.35, 1.85, 2.1, 1.95],
+      30.0:  [null, null, null, null, null, null, null, 1.25, 1.9, 1.45, 1.65, 1.5],
+      32.0:  [null, null, null, null, null, null, null, 0.85, 1.6, 1.05, 1.35, 1.15],
+      33.0:  [null, null, null, null, null, null, null, 0.7, 1.45, 0.9, 1.2, 1.0],
+      34.0:  [null, null, null, null, null, null, null, 0.55, 1.3, 0.7, 1.0, 0.85],
+      35.0:  [null, null, null, null, null, null, null, null, null, 0.55, 0.85, 0.7],
+      36.0:  [null, null, null, null, null, null, null, null, null, null, 0.75, 0.55],
+      38.0:  [null, null, null, null, null, null, null, null, null, null, 0.5, null]
+    }
+  };
+  CRANES["100"] = {
+    label: "100t", title: "100tクレーン 吊上げ能力計算", condition: "アウトリガ 最大張出・スマートチャート1", accent: "#7b57c9",
+    // ※ブーム10.2m「キャリヤの前方2°以内 前方つり」の列は含めていません（通常の10.2mの列を使用）
+    pivot: { r0: -2.7, h0: 3.5, maxAngle: 84, verified: false },
+    boomLengths: [10.2, 13.7, 17.2, 20.7, 24.2, 27.7, 31.2, 34.7, 38.2, 41.7, 45.2, 48.0],
+    maxRadius: [7.0, 10.0, 14.0, 16.0, 21.0, 24.0, 28.0, 31.0, 35.0, 38.0, 42.0, 44.0],
+    // ジブ付き性能表（ブーム41.7 / 45.2 / 48.0m ＋ ジブ）。作業半径の刻み表。rows は [作業半径(m), 定格総荷重(t)]（ブーム角度の情報なし）
+    jib: {
+      options: [
+        { length: 8.4,
+          gridR: [7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 16.0, 18.0, 20.0, 22.0, 24.0, 26.0, 28.0, 30.0, 32.0, 34.0, 36.0, 38.0, 40.0, 42.0, 44.0, 46.0],
+          booms: {
+            9: {
+              5: { rows: [[7.0, 4.0], [8.0, 4.0], [9.0, 4.0], [10.0, 4.0], [11.0, 4.0], [12.0, 4.0], [13.0, 4.0], [14.0, 4.0], [16.0, 3.95], [18.0, 3.65], [20.0, 3.4], [22.0, 3.2], [24.0, 2.95], [26.0, 2.8], [28.0, 2.6], [30.0, 2.5], [32.0, 2.25], [34.0, 2.05], [36.0, 1.85], [38.0, 1.65], [40.0, 1.45], [42.0, 1.25], [44.0, 0.95], [46.0, 0.7]] },
+              25: { rows: [[10.0, 4.0], [11.0, 4.0], [12.0, 4.0], [13.0, 3.9], [14.0, 3.75], [16.0, 3.5], [18.0, 3.25], [20.0, 3.05], [22.0, 2.9], [24.0, 2.75], [26.0, 2.6], [28.0, 2.45], [30.0, 2.35], [32.0, 2.25], [34.0, 2.05], [36.0, 1.85], [38.0, 1.65], [40.0, 1.5], [42.0, 1.3]] },
+              45: { rows: [[12.0, 2.65], [13.0, 2.6], [14.0, 2.55], [16.0, 2.45], [18.0, 2.35], [20.0, 2.3], [22.0, 2.2], [24.0, 2.15], [26.0, 2.1], [28.0, 2.05], [30.0, 2.0], [32.0, 2.0]] },
+              60: { rows: [[13.0, 1.5], [14.0, 1.5], [16.0, 1.45], [18.0, 1.4], [20.0, 1.4], [22.0, 1.35], [24.0, 1.35]] }
+            },
+            10: {
+              5: { rows: [[8.0, 4.0], [9.0, 4.0], [10.0, 4.0], [11.0, 4.0], [12.0, 4.0], [13.0, 4.0], [14.0, 4.0], [16.0, 3.85], [18.0, 3.55], [20.0, 3.3], [22.0, 3.1], [24.0, 2.9], [26.0, 2.7], [28.0, 2.55], [30.0, 2.4], [32.0, 2.3], [34.0, 2.2], [36.0, 1.95], [38.0, 1.6], [40.0, 1.25], [42.0, 0.95], [44.0, 0.7], [46.0, 0.45]] },
+              25: { rows: [[11.0, 4.0], [12.0, 3.95], [13.0, 3.8], [14.0, 3.65], [16.0, 3.4], [18.0, 3.2], [20.0, 3.0], [22.0, 2.8], [24.0, 2.65], [26.0, 2.55], [28.0, 2.4], [30.0, 2.3], [32.0, 2.2], [34.0, 2.1], [36.0, 2.0], [38.0, 1.75], [40.0, 1.4], [42.0, 1.05], [44.0, 0.8]] },
+              45: { rows: [[13.0, 2.6], [14.0, 2.55], [16.0, 2.45], [18.0, 2.4], [20.0, 2.3], [22.0, 2.25], [24.0, 2.15], [26.0, 2.1], [28.0, 2.05], [30.0, 2.0], [32.0, 2.0], [34.0, 1.95]] },
+              60: { rows: [[14.0, 1.5], [16.0, 1.45], [18.0, 1.4], [20.0, 1.4], [22.0, 1.35], [24.0, 1.35]] }
+            },
+            11: {
+              5: { rows: [[8.0, 4.0], [9.0, 4.0], [10.0, 4.0], [11.0, 4.0], [12.0, 4.0], [13.0, 3.95], [14.0, 3.85], [16.0, 3.55], [18.0, 3.3], [20.0, 3.05], [22.0, 2.7], [24.0, 2.35], [26.0, 2.0], [28.0, 1.75], [30.0, 1.5], [32.0, 1.3], [34.0, 1.1], [36.0, 0.95], [38.0, 0.8], [40.0, 0.65], [42.0, 0.5]] },
+              25: { rows: [[12.0, 3.7], [13.0, 3.55], [14.0, 3.45], [16.0, 3.2], [18.0, 3.05], [20.0, 2.85], [22.0, 2.6], [24.0, 2.25], [26.0, 1.95], [28.0, 1.7], [30.0, 1.5], [32.0, 1.3], [34.0, 1.1], [36.0, 0.95], [38.0, 0.8], [40.0, 0.65], [42.0, 0.55], [44.0, 0.4]] },
+              45: { rows: [[14.0, 2.6], [16.0, 2.5], [18.0, 2.4], [20.0, 2.3], [22.0, 2.25], [24.0, 2.2], [26.0, 1.95], [28.0, 1.75], [30.0, 1.5], [32.0, 1.3], [34.0, 1.15], [36.0, 0.95]] },
+              60: { rows: [[14.0, 1.5], [16.0, 1.45], [18.0, 1.4], [20.0, 1.4], [22.0, 1.35], [24.0, 1.35], [26.0, 1.3]] }
+            }
+          } },
+        { length: 13.1,
+          gridR: [8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 16.0, 18.0, 20.0, 22.0, 24.0, 26.0, 28.0, 30.0, 32.0, 34.0, 36.0, 38.0, 40.0, 42.0, 44.0, 46.0, 48.0, 50.0],
+          booms: {
+            9: {
+              5: { rows: [[8.0, 2.8], [9.0, 2.8], [10.0, 2.8], [11.0, 2.8], [12.0, 2.8], [13.0, 2.8], [14.0, 2.75], [16.0, 2.65], [18.0, 2.55], [20.0, 2.45], [22.0, 2.35], [24.0, 2.25], [26.0, 2.15], [28.0, 2.05], [30.0, 2.0], [32.0, 1.9], [34.0, 1.85], [36.0, 1.8], [38.0, 1.75], [40.0, 1.6], [42.0, 1.4], [44.0, 1.25], [46.0, 1.1], [48.0, 0.85], [50.0, 0.65]] },
+              25: { rows: [[13.0, 2.2], [14.0, 2.15], [16.0, 2.05], [18.0, 2.0], [20.0, 1.9], [22.0, 1.85], [24.0, 1.8], [26.0, 1.75], [28.0, 1.7], [30.0, 1.7], [32.0, 1.65], [34.0, 1.65], [36.0, 1.6], [38.0, 1.6], [40.0, 1.6], [42.0, 1.45], [44.0, 1.3], [46.0, 1.2]] },
+              45: { rows: [[16.0, 1.55], [18.0, 1.5], [20.0, 1.45], [22.0, 1.35], [24.0, 1.35], [26.0, 1.3], [28.0, 1.25], [30.0, 1.2], [32.0, 1.2], [34.0, 1.15], [36.0, 1.15]] },
+              60: { rows: [[18.0, 0.8], [20.0, 0.8], [22.0, 0.75], [24.0, 0.75], [26.0, 0.75], [28.0, 0.75]] }
+            },
+            10: {
+              5: { rows: [[9.0, 2.8], [10.0, 2.8], [11.0, 2.8], [12.0, 2.75], [13.0, 2.7], [14.0, 2.65], [16.0, 2.6], [18.0, 2.5], [20.0, 2.45], [22.0, 2.35], [24.0, 2.25], [26.0, 2.15], [28.0, 2.1], [30.0, 2.0], [32.0, 1.95], [34.0, 1.9], [36.0, 1.85], [38.0, 1.8], [40.0, 1.65], [42.0, 1.35], [44.0, 1.1], [46.0, 0.85], [48.0, 0.6]] },
+              25: { rows: [[14.0, 2.15], [16.0, 2.05], [18.0, 2.0], [20.0, 1.9], [22.0, 1.85], [24.0, 1.8], [26.0, 1.75], [28.0, 1.75], [30.0, 1.7], [32.0, 1.65], [34.0, 1.65], [36.0, 1.6], [38.0, 1.6], [40.0, 1.6], [42.0, 1.55], [44.0, 1.25], [46.0, 1.0], [48.0, 0.7]] },
+              45: { rows: [[18.0, 1.5], [20.0, 1.45], [22.0, 1.4], [24.0, 1.35], [26.0, 1.3], [28.0, 1.25], [30.0, 1.2], [32.0, 1.2], [34.0, 1.15], [36.0, 1.15], [38.0, 1.1], [40.0, 1.1]] },
+              60: { rows: [[18.0, 0.8], [20.0, 0.8], [22.0, 0.75], [24.0, 0.75], [26.0, 0.75], [28.0, 0.7], [30.0, 0.7]] }
+            },
+            11: {
+              5: { rows: [[10.0, 2.65], [11.0, 2.65], [12.0, 2.6], [13.0, 2.55], [14.0, 2.55], [16.0, 2.45], [18.0, 2.4], [20.0, 2.35], [22.0, 2.3], [24.0, 2.25], [26.0, 2.0], [28.0, 1.75], [30.0, 1.55], [32.0, 1.35], [34.0, 1.15], [36.0, 1.0], [38.0, 0.85], [40.0, 0.7], [42.0, 0.6], [44.0, 0.5], [46.0, 0.4]] },
+              25: { rows: [[16.0, 2.05], [18.0, 1.95], [20.0, 1.9], [22.0, 1.85], [24.0, 1.8], [26.0, 1.75], [28.0, 1.75], [30.0, 1.55], [32.0, 1.35], [34.0, 1.2], [36.0, 1.0], [38.0, 0.9], [40.0, 0.75], [42.0, 0.65], [44.0, 0.55], [46.0, 0.4]] },
+              45: { rows: [[18.0, 1.5], [20.0, 1.45], [22.0, 1.4], [24.0, 1.35], [26.0, 1.3], [28.0, 1.25], [30.0, 1.2], [32.0, 1.2], [34.0, 1.15], [36.0, 1.05], [38.0, 0.9], [40.0, 0.8]] },
+              60: { rows: [[20.0, 0.8], [22.0, 0.75], [24.0, 0.75], [26.0, 0.75], [28.0, 0.7], [30.0, 0.7]] }
+            }
+          } },
+        { length: 17.7,
+          gridR: [9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 16.0, 18.0, 20.0, 22.0, 24.0, 26.0, 28.0, 30.0, 32.0, 34.0, 36.0, 38.0, 40.0, 42.0, 44.0, 46.0, 48.0, 50.0, 52.0, 54.0, 55.0, 56.0],
+          booms: {
+            9: {
+              5: { rows: [[9.0, 1.5], [10.0, 1.5], [11.0, 1.45], [12.0, 1.45], [13.0, 1.4], [14.0, 1.4], [16.0, 1.3], [18.0, 1.25], [20.0, 1.2], [22.0, 1.15], [24.0, 1.1], [26.0, 1.05], [28.0, 1.0], [30.0, 0.95], [32.0, 0.95], [34.0, 0.9], [36.0, 0.85], [38.0, 0.85], [40.0, 0.8], [42.0, 0.8], [44.0, 0.75], [46.0, 0.75], [48.0, 0.75], [50.0, 0.7], [52.0, 0.7], [54.0, 0.6], [55.0, 0.5], [56.0, 0.45]] },
+              25: { rows: [[16.0, 1.0], [18.0, 0.95], [20.0, 0.9], [22.0, 0.9], [24.0, 0.85], [26.0, 0.85], [28.0, 0.8], [30.0, 0.8], [32.0, 0.75], [34.0, 0.75], [36.0, 0.75], [38.0, 0.7], [40.0, 0.7], [42.0, 0.7], [44.0, 0.7], [46.0, 0.7], [48.0, 0.7], [50.0, 0.7]] },
+              45: { rows: [[20.0, 0.75], [22.0, 0.75], [24.0, 0.7], [26.0, 0.7], [28.0, 0.7], [30.0, 0.7], [32.0, 0.7], [34.0, 0.7], [36.0, 0.7], [38.0, 0.7], [40.0, 0.7], [42.0, 0.7]] },
+              60: { rows: [[22.0, 0.5], [24.0, 0.45], [26.0, 0.45], [28.0, 0.45], [30.0, 0.45], [32.0, 0.4]] }
+            },
+            10: {
+              5: { rows: [[9.0, 1.45], [10.0, 1.45], [11.0, 1.4], [12.0, 1.4], [13.0, 1.35], [14.0, 1.35], [16.0, 1.3], [18.0, 1.25], [20.0, 1.2], [22.0, 1.15], [24.0, 1.1], [26.0, 1.05], [28.0, 1.05], [30.0, 1.0], [32.0, 0.95], [34.0, 0.9], [36.0, 0.9], [38.0, 0.85], [40.0, 0.8], [42.0, 0.8], [44.0, 0.8], [46.0, 0.75], [48.0, 0.75], [50.0, 0.7], [52.0, 0.5]] },
+              25: { rows: [[16.0, 1.0], [18.0, 0.95], [20.0, 0.9], [22.0, 0.9], [24.0, 0.85], [26.0, 0.85], [28.0, 0.8], [30.0, 0.8], [32.0, 0.75], [34.0, 0.75], [36.0, 0.75], [38.0, 0.7], [40.0, 0.7], [42.0, 0.7], [44.0, 0.7], [46.0, 0.7], [48.0, 0.7], [50.0, 0.7], [52.0, 0.7], [54.0, 0.45]] },
+              45: { rows: [[22.0, 0.75], [24.0, 0.7], [26.0, 0.7], [28.0, 0.7], [30.0, 0.7], [32.0, 0.7], [34.0, 0.7], [36.0, 0.7], [38.0, 0.65], [40.0, 0.65], [42.0, 0.65], [44.0, 0.65]] },
+              60: { rows: [[24.0, 0.45], [26.0, 0.45], [28.0, 0.45], [30.0, 0.45], [32.0, 0.4], [34.0, 0.4]] }
+            },
+            11: {
+              5: { rows: [[10.0, 1.35], [11.0, 1.35], [12.0, 1.35], [13.0, 1.3], [14.0, 1.3], [16.0, 1.25], [18.0, 1.2], [20.0, 1.15], [22.0, 1.15], [24.0, 1.1], [26.0, 1.05], [28.0, 1.0], [30.0, 1.0], [32.0, 0.95], [34.0, 0.9], [36.0, 0.9], [38.0, 0.85], [40.0, 0.75], [42.0, 0.65], [44.0, 0.55], [46.0, 0.45]] },
+              25: { rows: [[18.0, 0.95], [20.0, 0.9], [22.0, 0.9], [24.0, 0.85], [26.0, 0.85], [28.0, 0.8], [30.0, 0.8], [32.0, 0.75], [34.0, 0.75], [36.0, 0.75], [38.0, 0.7], [40.0, 0.7], [42.0, 0.7], [44.0, 0.6], [46.0, 0.5], [48.0, 0.4]] },
+              45: { rows: [[22.0, 0.75], [24.0, 0.7], [26.0, 0.7], [28.0, 0.7], [30.0, 0.7], [32.0, 0.7], [34.0, 0.7], [36.0, 0.65], [38.0, 0.65], [40.0, 0.65], [42.0, 0.65], [44.0, 0.65], [46.0, 0.55]] },
+              60: { rows: [[24.0, 0.45], [26.0, 0.45], [28.0, 0.45], [30.0, 0.45], [32.0, 0.4], [34.0, 0.4], [36.0, 0.4]] }
+            }
+          } }
+      ]
+    },
+    defaultRadius: "10.0",
+    data: {
+      1.6:  [75.0, null, null, null, null, null, null, null, null, null, null, null],
+      2.0:  [75.0, 45.0, 45.0, 40.0, 35.0, null, null, null, null, null, null, null],
+      2.5:  [74.1, 45.0, 45.0, 40.0, 35.0, 25.0, null, null, null, null, null, null],
+      3.0:  [66.5, 45.0, 45.0, 40.0, 35.0, 25.0, 20.0, null, null, null, null, null],
+      3.5:  [60.1, 45.0, 45.0, 40.0, 35.0, 25.0, 20.0, 18.4, null, null, null, null],
+      4.0:  [54.7, 45.0, 42.9, 40.0, 33.8, 25.0, 20.0, 18.4, 15.0, null, null, null],
+      4.5:  [50.0, 45.0, 40.2, 40.0, 32.4, 25.0, 20.0, 18.4, 15.0, null, null, null],
+      5.0:  [45.9, 45.0, 40.0, 39.5, 30.6, 25.0, 20.0, 18.4, 15.0, 12.1, null, null],
+      5.5:  [42.4, 42.2, 40.0, 37.6, 28.9, 25.0, 20.0, 18.4, 15.0, 12.1, 9.7, 7.5],
+      6.0:  [38.5, 38.3, 38.6, 35.9, 27.4, 24.9, 20.0, 18.4, 15.0, 12.1, 9.7, 7.5],
+      6.5:  [35.3, 35.1, 35.3, 34.4, 26.1, 24.1, 20.0, 18.4, 15.0, 12.1, 9.7, 7.5],
+      7.0:  [32.5, 32.3, 32.5, 32.8, 24.9, 23.2, 20.0, 18.1, 15.0, 12.1, 9.7, 7.5],
+      8.0:  [null, 27.7, 27.9, 28.3, 22.7, 21.7, 19.2, 16.8, 14.9, 12.1, 9.7, 7.5],
+      9.0:  [null, 24.1, 24.4, 24.7, 20.9, 20.4, 18.0, 15.6, 14.1, 12.1, 9.7, 7.5],
+      10.0:  [null, 21.3, 21.5, 21.8, 19.3, 19.2, 16.8, 14.5, 13.2, 11.9, 9.7, 7.5],
+      11.0:  [null, null, 19.2, 19.5, 18.0, 18.1, 15.6, 13.6, 12.4, 11.3, 9.7, 7.5],
+      12.0:  [null, null, 17.2, 17.5, 16.8, 17.1, 14.6, 12.8, 11.6, 10.7, 9.6, 7.5],
+      14.0:  [null, null, 13.7, 14.1, 14.2, 15.2, 12.9, 11.4, 10.3, 9.55, 8.85, 7.15],
+      16.0:  [null, null, null, 11.4, 12.6, 12.3, 11.5, 10.3, 9.3, 8.6, 8.1, 6.5],
+      18.0:  [null, null, null, null, 10.4, 10.1, 9.8, 9.35, 8.45, 7.8, 7.35, 5.95],
+      20.0:  [null, null, null, null, 8.75, 8.45, 8.1, 8.1, 7.7, 7.1, 6.7, 5.3],
+      21.0:  [null, null, null, null, 8.1, 7.75, 7.7, 7.4, 7.4, 6.8, 6.4, 5.0],
+      22.0:  [null, null, null, null, null, 7.15, 7.4, 6.75, 6.95, 6.5, 6.15, 4.75],
+      24.0:  [null, null, null, null, null, 6.1, 6.45, 5.7, 5.85, 6.0, 5.65, 4.3],
+      26.0:  [null, null, null, null, null, null, 5.55, 5.3, 5.0, 5.2, 5.25, 3.85],
+      28.0:  [null, null, null, null, null, null, 4.85, 5.0, 4.25, 4.55, 4.65, 3.5],
+      30.0:  [null, null, null, null, null, null, null, 4.4, 3.9, 4.25, 4.05, 3.2],
+      31.0:  [null, null, null, null, null, null, null, 4.15, 3.7, 4.05, 3.75, 3.05],
+      32.0:  [null, null, null, null, null, null, null, null, 3.55, 3.75, 3.5, 2.9],
+      34.0:  [null, null, null, null, null, null, null, null, 3.3, 3.3, 3.05, 2.65],
+      35.0:  [null, null, null, null, null, null, null, null, 3.2, 3.1, 2.8, 2.55],
+      36.0:  [null, null, null, null, null, null, null, null, null, 2.9, 2.65, 2.45],
+      38.0:  [null, null, null, null, null, null, null, null, null, 2.55, 2.25, 2.25],
+      40.0:  [null, null, null, null, null, null, null, null, null, null, 1.95, 1.95],
+      42.0:  [null, null, null, null, null, null, null, null, null, null, 1.7, 1.65],
+      44.0:  [null, null, null, null, null, null, null, null, null, null, null, 1.45]
+    }
+  };
+
+  var CRANE_ORDER = ["13", "16", "25", "50", "70", "100"];
+  var currentCrane = "13";
+  var boomIndexByCrane = {};
+  CRANE_ORDER.forEach(function(key){
+    boomIndexByCrane[key] = Math.max(0, CRANES[key].boomLengths.length - 1);
+  });
+  var selectedBoomIndex = boomIndexByCrane[currentCrane];
+  var jibLen = 0, jibOff = 5;   // ジブ（0＝なし）とオフセット角
+  var manualOverride = false;  // 手動でクレーン・ブーム・ジブを選んだか
+  var baseRadius = 6.0;        // ユーザーが入れた作業半径（障害物による引き上げ前）
+  var OBS_MARGIN = 1.0;        // 障害物の上の余裕(m)。0にすると従来の判定
+
+  function $(id){ return document.getElementById(id); }
+  var craneTabs = $("craneTabs"), boomSeg = $("boomSeg");
+  var radiusInput = $("radiusInput"), radiusMinus = $("radiusMinus"), radiusPlus = $("radiusPlus");
+  var loadWeight = $("loadWeight"), autoNote = $("autoNote");
+  var jibField = $("jibField"), jibSeg = $("jibSeg"), jibOffWrap = $("jibOffWrap"), jibOffSeg = $("jibOffSeg");
+  var jibAutoBtn = $("jibAutoBtn"), jibUnavailable = $("jibUnavailable");
+  var decideBtn = $("decideBtn"), resultCard = $("resultCard"), resultValue = $("resultValue"), resultDetail = $("resultDetail");
+  var craneTitle = $("craneTitle"), tonnageNum = $("tonnageNum"), tonnageUnit = $("tonnageUnit"), condTagText = $("condTagText");
+  var obsHeight = $("obsHeight"), obsDist = $("obsDist");
+  var obsDiagram = $("obsDiagram"), obsCard = $("obsCard"), obsSummary = $("obsSummary"), obsTable = $("obsTable"), obsReco = $("obsReco"), obsWarn = $("obsWarn");
+
+  // 表示用のブーム名。伸縮モードがある機種は「16.6①」のように付ける
+  function boomLabel(c, idx){
+    var t = fmtBoom(c.boomLengths[idx]), m = c.boomModes ? c.boomModes[idx] : null;
+    return m ? t + (c.modeMarks || ["", "①", "②"])[m] : t;
+  }
+  function boomLabelM(c, idx){
+    var t = fmtBoom(c.boomLengths[idx]) + "m", m = c.boomModes ? c.boomModes[idx] : null;
+    return m ? t + (c.modeMarks || ["", "①", "②"])[m] : t;
+  }
+  function boomLong(c, idx){
+    var t = fmtBoom(c.boomLengths[idx]) + "m", m = c.boomModes ? c.boomModes[idx] : null;
+    return m ? t + "（モード" + (c.modeNames ? c.modeNames[m] : m) + "）" : t;
+  }
+  function fmtBoom(len){ var t = len.toFixed(2); return t.charAt(t.length - 1) === "0" ? t.slice(0, -1) : t; }
+
+  function buildCraneTabs(){
+    craneTabs.innerHTML = "";
+    if(CRANE_ORDER.length < 2){ craneTabs.style.display = "none"; return; }
+    CRANE_ORDER.forEach(function(key){
+      var c = CRANES[key];
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.style.setProperty("--accent", c.accent);
+      btn.style.setProperty("--on", c.on || "#fff");
+      if(key === currentCrane) btn.classList.add("active");
+      btn.innerHTML = '<span class="cap-num">' + c.label + '</span><span class="cap-unit">吊り</span>';
+      btn.addEventListener("click", function(){ selectCrane(key); });
+      craneTabs.appendChild(btn);
+    });
+  }
+
+  function fj(x){ return Number(x).toFixed(1); }
+  function jibOptionsForBoom(c, idx){ return c.jib ? c.jib.options.filter(function(o){ return !!o.booms[idx]; }) : []; }
+  function jibAvailable(){ return jibOptionsForBoom(CRANES[currentCrane], selectedBoomIndex).length > 0; }
+  function jibActive(){ return jibAvailable() && jibLen > 0; }
+  function jibTable(c, len, idx, off){
+    var o = c.jib.options.filter(function(x){ return x.length === len; })[0];
+    return (o && o.booms[idx]) ? o.booms[idx][off] : null;
+  }
+  function jibHasGeometry(c){ return !!jibTable(c, jibLen, selectedBoomIndex, jibOff); }
+
+  function buildJibSeg(){
+    var c = CRANES[currentCrane];
+    var opts = jibOptionsForBoom(c, selectedBoomIndex);
+    jibField.style.display = "block";
+    jibUnavailable.style.display = opts.length ? "none" : "block";
+    jibAutoBtn.disabled = !(c.jib && c.jib.options && c.jib.options.length);
+    if(!opts.length){
+      jibLen = 0;
+      jibSeg.innerHTML = "";
+      jibOffWrap.style.display = "none";
+      jibOffSeg.innerHTML = "";
+      return;
+    }
+    if(jibLen > 0 && !opts.some(function(o){ return o.length === jibLen; })) jibLen = 0;
+    jibSeg.innerHTML = "";
+    jibSeg.style.setProperty("--boom-count", opts.length + 1);
+    [{ len: 0, text: "なし" }].concat(opts.map(function(o){ return { len: o.length, text: fj(o.length) + "m" }; })).forEach(function(o){
+      var b = document.createElement("button");
+      b.type = "button"; b.textContent = o.text;
+      if(o.len === jibLen) b.classList.add("active");
+      b.addEventListener("click", function(){ manualOverride = true; autoNote.style.display = "none"; jibLen = o.len; buildJibSeg(); calculate(); });
+      jibSeg.appendChild(b);
+    });
+    jibOffWrap.style.display = jibLen > 0 ? "block" : "none";
+    $("jibNote").textContent = "「なし」に戻すとブームのみで計算します。" + (jibLen > 0 && c.jib.note ? " ※" + c.jib.note : "");
+    jibOffSeg.innerHTML = "";
+    var curOpt = opts.filter(function(o){ return o.length === jibLen; })[0] || opts[0];
+    var offs = Object.keys(curOpt.booms[selectedBoomIndex]).map(Number);
+    if(offs.indexOf(jibOff) < 0) jibOff = offs[0];
+    jibOffSeg.style.setProperty("--boom-count", offs.length);
+    offs.forEach(function(o){
+      var b = document.createElement("button");
+      b.type = "button"; b.textContent = o + "°";
+      if(o === jibOff) b.classList.add("active");
+      b.addEventListener("click", function(){ manualOverride = true; autoNote.style.display = "none"; jibOff = o; buildJibSeg(); calculate(); });
+      jibOffSeg.appendChild(b);
+    });
+  }
+
+  // ジブ付き：作業半径以上で最も近い行（安全側）を採用。rows は [作業半径, 定格荷重, (ブーム角)]
+  function lookupJibFor(c, len, idx, off, R){
+    var opt = c.jib.options.filter(function(o){ return o.length === len; })[0];
+    var rows = opt.booms[idx][off].rows;
+    var Rq = R;
+    if(opt.gridR){   // 半径の刻み表：入力半径を刻みに切り上げる
+      var g = null;
+      for(var k = 0; k < opt.gridR.length; k++){ if(opt.gridR[k] >= R - 1e-9){ g = opt.gridR[k]; break; } }
+      if(g === null) return { over: true, max: rows[rows.length - 1][0] };
+      Rq = g;
+    }
+    if(Rq < rows[0][0] - 1e-9) return { under: true, min: rows[0][0] };
+    for(var i = 0; i < rows.length; i++){ if(rows[i][0] >= Rq - 1e-9) return { row: rows[i] }; }
+    return { over: true, max: rows[rows.length - 1][0] };
+  }
+  function lookupJib(c, R){ return lookupJibFor(c, jibLen, selectedBoomIndex, jibOff, R); }
+
+  // 選定画面から、現在のクレーンで条件に合うジブ構成を探して選択する。
+  jibAutoBtn.addEventListener("click", function(){
+    var c = CRANES[currentCrane];
+    var load = parseFloat(loadWeight.value), R = parseFloat(radiusInput.value);
+    if(!c.jib || !c.jib.options || !c.jib.options.length){
+      autoNote.textContent = c.label + "には登録されたジブ性能表がありません。";
+      autoNote.style.display = "block"; return;
+    }
+    if(!(R > 0)){
+      autoNote.textContent = "先に作業半径を正しく入力してください。";
+      autoNote.style.display = "block"; return;
+    }
+    var d = parseOpt(obsDist), h = parseOpt(obsHeight);
+    if((d !== null && isNaN(d)) || (h !== null && isNaN(h)) || (d !== null && h === null)){
+      autoNote.textContent = "障害物の半径と高さを確認してください。";
+      autoNote.style.display = "block"; return;
+    }
+    R = targetRadiusForObstacle(R, d);
+    var need = h === null ? 0 : h;
+    var savedBoom = selectedBoomIndex, best = null;
+    try{
+      c.jib.options.forEach(function(o){
+        Object.keys(o.booms).map(Number).forEach(function(bi){
+          Object.keys(o.booms[bi]).map(Number).forEach(function(off){
+            selectedBoomIndex = bi;
+            var ev = evalJibCombo(c, o.length, off, R, need, d);
+            if(ev.ok && (!(load > 0) || c80ok(ev.cap, load))){
+              if(!best || (load > 0 ? ev.cap < best.cap : ev.cap > best.cap)){
+                best = { idx: bi, jl: o.length, jo: off, cap: ev.cap };
+              }
+            }
+          });
+        });
+      });
+    } finally { selectedBoomIndex = savedBoom; }
+    if(!best){
+      autoNote.textContent = c.label + "では、入力した作業半径・吊り荷・障害物条件に合うジブ構成が見つかりません。別のクレーンか条件を確認してください。";
+      autoNote.style.display = "block"; return;
+    }
+    manualOverride = true;
+    selectedBoomIndex = best.idx;
+    boomIndexByCrane[currentCrane] = best.idx;
+    jibLen = best.jl; jibOff = best.jo;
+    radiusInput.value = R.toFixed(1);
+    buildBoomSeg(); buildJibSeg(); calculate();
+    autoNote.textContent = c.label + "のジブを選定しました（ブーム " + boomLabelM(c, best.idx) + "＋ジブ " + fj(best.jl) + "m・オフセット " + best.jo + "°）。表示能力は定格荷重の80%です。";
+    autoNote.style.display = "block";
+  });
+
+  function buildBoomSeg(){
+    boomSeg.innerHTML = "";
+    var c = CRANES[currentCrane];
+    var nb = Math.max(1, c.boomLengths.length);
+    boomSeg.style.setProperty("--boom-count", nb > 8 ? Math.ceil(nb / 2) : nb);
+    if(c.pending){
+      boomSeg.innerHTML = '<div style="grid-column:1 / -1; font-size:12px; font-weight:700; color:#8a8272; padding:8px 4px; text-align:center;">ブーム長・性能表は準備中です</div>';
+      return;
+    }
+    c.boomLengths.forEach(function(len, idx){
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = boomLabel(c, idx);
+      if(idx === selectedBoomIndex) btn.classList.add("active");
+      btn.addEventListener("click", function(){
+        manualOverride = true; autoNote.style.display = "none";
+        selectedBoomIndex = idx;
+        boomIndexByCrane[currentCrane] = idx;
+        Array.prototype.forEach.call(boomSeg.children, function(el){ el.classList.remove("active"); });
+        btn.classList.add("active");
+        buildJibSeg();
+        calculate();
+      });
+      boomSeg.appendChild(btn);
+    });
+  }
+
+  function selectCrane(key, auto){
+    currentCrane = key;
+    var c = CRANES[key];
+    selectedBoomIndex = boomIndexByCrane[key];
+    if(!radiusInput.value.trim()){ radiusInput.value = c.defaultRadius; baseRadius = parseFloat(c.defaultRadius); }
+    if(!auto){ manualOverride = true; autoNote.style.display = "none"; }
+
+    craneTitle.textContent = c.title;
+    tonnageNum.textContent = c.label.replace("t", "");
+    tonnageNum.style.color = c.accent;
+    tonnageUnit.style.color = c.accent;
+    resultCard.style.setProperty("--accent", c.accent);
+    $("boomHint").textContent = c.boomNote || "m";
+    condTagText.textContent = c.label + "・" + c.condition;
+    Array.prototype.forEach.call(craneTabs.children, function(el, i){
+      el.classList.toggle("active", CRANE_ORDER[i] === key);
+    });
+    jibLen = 0;
+    buildBoomSeg();
+    buildJibSeg();
+    calculate();
+  }
+
+  function nudgeRadius(delta){
+    var v = parseFloat(radiusInput.value);
+    if(isNaN(v)) v = 0;
+    v = Math.max(0.1, Math.round((v + delta) * 10) / 10);
+    radiusInput.value = v.toFixed(1);
+    baseRadius = v;
+    autoReselectForLoadRadius(); calculate();
+  }
+  radiusMinus.addEventListener("click", function(){ nudgeRadius(-0.5); });
+  radiusPlus.addEventListener("click", function(){ nudgeRadius(0.5); });
+
+  // optional=true：0以下になったら「空欄（なし）」に戻す
+  function nudgeField(el, delta, optional){
+    var v = parseFloat(el.value);
+    if(isNaN(v)) v = 0;
+    v = Math.round((v + delta) * 10) / 10;
+    el.value = (v <= 0) ? (optional ? "" : "0.0") : v.toFixed(1);
+  }
+  function onFieldEdit(){ autoReselectForLoadRadius(); calculate(); }
+
+  $("loadMinus").addEventListener("click", function(){ nudgeField(loadWeight, -0.5, true); onFieldEdit(); });
+  $("loadPlus").addEventListener("click", function(){ nudgeField(loadWeight, 0.5, true); onFieldEdit(); });
+  $("obsDistMinus").addEventListener("click", function(){ nudgeField(obsDist, -0.5, true); onFieldEdit(); });
+  $("obsDistPlus").addEventListener("click", function(){ nudgeField(obsDist, 0.5, true); onFieldEdit(); });
+  $("obsHeightMinus").addEventListener("click", function(){ nudgeField(obsHeight, -1, true); onFieldEdit(); });
+  $("obsHeightPlus").addEventListener("click", function(){ nudgeField(obsHeight, 1, true); onFieldEdit(); });
+
+  radiusInput.addEventListener("change", function(){
+    var v = parseFloat(radiusInput.value);
+    if(v > 0) baseRadius = v;
+    onFieldEdit();
+  });
+  [loadWeight, obsDist, obsHeight].forEach(function(el){ el.addEventListener("change", onFieldEdit); });
+  [radiusInput, loadWeight, obsDist, obsHeight].forEach(function(el){
+    el.addEventListener("keydown", function(e){ if(e.key === "Enter") el.blur(); });
+  });
+
+  function setState(state){
+    resultValue.classList.remove("ng-big", "ng-mid");
+    resultCard.classList.remove("state-empty", "state-error", "state-ok");
+    resultCard.classList.add(state);
+  }
+
+  // 性能表から値を引く（作業半径は切り上げた段、安全側）
+  // 定格荷重の80%（小数第3位以下は切り捨て＝安全側）
+  function c80(v){ return Math.floor(v * 80 + 1e-9) / 100; }
+
+  function lookupCapacity(c, radius, boomIdx){
+    if(c.maxRadius && radius > c.maxRadius[boomIdx] + 1e-9){
+      return { row: c.maxRadius[boomIdx], value: null, overMax: true };
+    }
+    var radii = Object.keys(c.data).map(Number).sort(function(a,b){return a-b;});
+    for(var i=0; i<radii.length; i++){
+      if(radii[i] >= radius){
+        return { row: radii[i], value: c.data[radii[i]][boomIdx] };
+      }
+    }
+    return null;
+  }
+
+  var lastHit = null, lastRadius = null, lastSel = null;
+
+  function applyObstacleNG(sel){
+    if(sel && !sel.ok && resultCard.classList.contains("state-ok")){
+      setState("state-error");
+      resultValue.textContent = "NG";
+      resultValue.classList.add("ng-big");
+      resultDetail.textContent = (sel.reason === "ブーム干渉" ? "ブームが障害物に干渉します" : "障害物：" + sel.reason) +
+        (sel.cap !== null ? "（定格の80% " + c80(sel.cap).toFixed(2) + "t／定格荷重 " + sel.cap.toFixed(2) + "t は参考）" : "");
+      resultDetail.classList.add("warn");
+    }
+  }
+
+  function calculateCore(){
+    lastHit = null; lastRadius = null; lastSel = null;
+    if(CRANES[currentCrane].pending){
+      setState("state-empty");
+      resultValue.textContent = "準備中";
+      resultDetail.textContent = CRANES[currentCrane].label + "の性能表は準備中です。しばらくお待ちください。";
+      resultDetail.classList.remove("warn");
+      obsCard.style.display = "none";
+      return;
+    }
+    var c = CRANES[currentCrane];
+    var raw = radiusInput.value.trim();
+    var radius = parseFloat(raw);
+
+    if(raw === "" || isNaN(radius) || radius <= 0){
+      setState("state-error");
+      resultValue.textContent = "入力エラー";
+      resultDetail.textContent = "作業半径を正しく入力してください。";
+      resultDetail.classList.remove("warn");
+      obsCard.style.display = "none";
+      return;
+    }
+
+    lastRadius = radius;
+
+    if(jibActive()){
+      var jr = lookupJib(c, radius), jtext = "ジブ" + fj(jibLen) + "m・オフセット" + jibOff + "°";
+      if(jr.under || jr.over){
+        setState("state-error");
+        resultValue.textContent = jr.under ? "半径不足" : "半径超過";
+        resultDetail.textContent = jtext + (jr.under ? "の最小作業半径は " + jr.min.toFixed(1) + "m です。" : "の最大作業半径 " + jr.max.toFixed(1) + "m を超えています。");
+        resultDetail.classList.remove("warn");
+      } else {
+        var jrow = jr.row, angTxt = jrow.length > 2 ? "（ブーム角" + jrow[2] + "°）" : "";
+        lastHit = { row: jrow[0], value: jrow[1], jibAngle: jrow.length > 2 ? jrow[2] : null };
+        setState("state-ok");
+        resultValue.innerHTML = c80(jrow[1]).toFixed(2) + '<span class="t">t</span><span class="rated">（定格荷重 ' + jrow[1].toFixed(2) + 't）</span>';
+        if(Math.abs(jrow[0] - radius) > 0.001){
+          resultDetail.textContent = jtext + "：入力半径 " + radius.toFixed(2) + "m → 性能表 " + jrow[0].toFixed(1) + "m" + angTxt + "の値（安全側）";
+          resultDetail.classList.add("warn");
+        } else {
+          resultDetail.textContent = jtext + "：性能表の作業半径 " + jrow[0].toFixed(1) + "m" + angTxt + "の値";
+          resultDetail.classList.remove("warn");
+        }
+      }
+      var jsel = checkObstacle(radius);
+      lastSel = jsel;
+      applyObstacleNG(jsel);
+      return;
+    }
+
+    var hit = lookupCapacity(c, radius, selectedBoomIndex);
+    lastHit = hit;
+    var boomText = boomLabelM(c, selectedBoomIndex);
+
+    if(hit === null){
+      setState("state-error");
+      resultValue.textContent = "表の範囲外";
+      resultDetail.textContent = "この性能表の最大作業半径を超えています。";
+      resultDetail.classList.remove("warn");
+    } else if(hit.value === null || hit.value === undefined){
+      setState("state-error");
+      resultValue.textContent = hit.overMax ? "半径超過" : "データなし";
+      resultDetail.textContent = hit.overMax ?
+        "ブーム " + boomText + " の最大作業半径 " + hit.row.toFixed(1) + "m を超えています。" : "ブーム " + boomText + "・作業半径 " + hit.row.toFixed(1) + "m の表データがありません。";
+      resultDetail.classList.remove("warn");
+    } else {
+      setState("state-ok");
+      resultValue.innerHTML = c80(hit.value).toFixed(2) + '<span class="t">t</span><span class="rated">（定格荷重 ' + hit.value.toFixed(2) + 't）</span>';
+      if(Math.abs(hit.row - radius) > 0.001){
+        resultDetail.textContent = "入力半径 " + radius.toFixed(2) + "m → 性能表 " + hit.row.toFixed(1) + "m の値を表示（安全側）";
+        resultDetail.classList.add("warn");
+      } else {
+        resultDetail.textContent = "性能表の作業半径 " + hit.row.toFixed(1) + "m の値";
+        resultDetail.classList.remove("warn");
+      }
+    }
+
+    var sel = checkObstacle(radius);
+    lastSel = sel;
+    applyObstacleNG(sel);
+  }
+
+  function applyLoadNG(){
+    var lw = parseFloat(loadWeight.value);
+    if(!(lw > 0) || !lastHit || lastHit.value == null) return;
+    if(!resultCard.classList.contains("state-ok")) return;
+    var allow = c80(lastHit.value);
+    if(allow < lw - 1e-9){
+      setState("state-error");
+      resultValue.textContent = "NG（最大吊り上げ能力 " + allow.toFixed(2) + "t）";
+      resultValue.classList.add("ng-mid");
+      resultDetail.textContent = "吊り荷 " + lw.toFixed(1) + "t が、能力（定格の80%）" + allow.toFixed(2) + "t を超えています";
+      resultDetail.classList.add("warn");
+    } else {
+      resultDetail.textContent += "（吊り荷 " + lw.toFixed(1) + "t：OK）";
+    }
+  }
+
+  function calculate(){
+    calculateCore();
+    applyLoadNG();
+    var okR = parseFloat(radiusInput.value) > 0, okL = parseFloat(loadWeight.value) > 0;
+    decideBtn.disabled = !(okR && okL);
+    decideBtn.textContent = (okR && !okL) ? "吊り荷の重さを入れてください" : "確認画面へ ▶";
+    if(typeof syncSliders === "function") syncSliders();
+  }
+
+  /* ---------- 障害物チェック ---------- */
+  function parseOpt(el){
+    var s = el.value.trim();
+    if(s === "") return null;
+    var v = parseFloat(s);
+    return isNaN(v) ? NaN : v;
+  }
+
+  function evalBoom(c, idx, R, need, hObs, dObs, boomClr){
+    var P = c.pivot, L = c.boomLengths[idx];
+    var res = { boom: L, idx: idx, angle: null, tip: null, boomAt: null, cap: null, ok: false, reason: "" };
+    var hit = lookupCapacity(c, R, idx);
+    res.cap = (hit && hit.value != null) ? hit.value : null;
+
+    var cosT = (R - P.r0) / L;
+    if(cosT > 1){ res.reason = "半径が届かない"; return res; }
+    var theta = Math.acos(Math.max(-1, cosT));
+    res.angle = theta * 180 / Math.PI;
+    res.tip = P.h0 + L * Math.sin(theta);
+
+    if(res.angle > P.maxAngle){ res.reason = "起伏角超過"; return res; }
+    if(res.cap === null){ res.reason = "能力表外"; return res; }
+    if(dObs !== null && dObs > P.r0 && dObs < R){
+      res.boomAt = P.h0 + (dObs - P.r0) * Math.tan(theta);
+      if(res.boomAt < hObs + boomClr){ res.reason = "ブーム干渉"; return res; }
+    }
+    if(res.tip < need){ res.reason = "高さ不足 " + (res.tip - need).toFixed(1) + "m"; return res; }
+    res.ok = true;
+    res.reason = "OK";
+    return res;
+  }
+
+
+  function drawDiagram(c, R, hObs, dObs, sel, boomClr){
+    var P = c.pivot, W = 320, H = 178, padL = 8, padR = 8, padT = 12, padB = 40;
+    var obsX = (dObs !== null) ? dObs : R;
+    var obsW = 2.5;
+    var xmin = Math.min(-3.2, P.r0 - 1.2);
+    var xmax = Math.max(R, obsX + obsW) + 1.5;
+    var tipH = (sel.tip !== null) ? sel.tip : P.h0;
+    var ymax = Math.max(tipH, hObs, P.h0) + 3;
+    var sc = Math.min((W - padL - padR) / (xmax - xmin), (H - padT - padB) / ymax);
+    var offX = padL + ((W - padL - padR) - (xmax - xmin) * sc) / 2;
+    var base = H - padB;
+    function X(x){ return (offX + (x - xmin) * sc).toFixed(1); }
+    function Y(y){ return (base - y * sc).toFixed(1); }
+    function T(x,y,size,col,txt){
+      var a = ' x="'+x+'" y="'+y+'" text-anchor="middle" font-size="'+size+'" font-weight="900" stroke-linejoin="round"';
+      return '<text'+a+' fill="none" stroke="#f7f3e6" stroke-width="3.5">'+txt+'</text><text'+a+' fill="'+col+'">'+txt+'</text>';
+    }
+    function L(x1,y1,x2,y2,col,w,dash){
+      return '<line x1="'+X(x1)+'" y1="'+Y(y1)+'" x2="'+X(x2)+'" y2="'+Y(y2)+'" stroke="'+col+'" stroke-width="'+w+'"'+(dash?' stroke-dasharray="'+dash+'"':'')+' stroke-linecap="round"/>';
+    }
+    var o = '<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="クレーンのトン数と吊り荷重量、障害物とブームの側面図">';
+    o += '<defs><pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#f3d9a8"/><line x1="0" y1="0" x2="0" y2="6" stroke="#c98a2b" stroke-width="2"/></pattern></defs>';
+    // イラスト上部の空白に、クレーンのトン数と吊り荷重量を大きく表示
+    var craneTonLabel = String(c.label || 'クレーン').replace(/\s+/g, '');
+    var craneTonMatch = craneTonLabel.match(/[0-9]+(?:\.[0-9]+)?t/i);
+    var craneTonNumber = craneTonMatch ? craneTonMatch[0] : craneTonLabel;
+    var craneTonValue = craneTonMatch ? parseFloat(craneTonMatch[0]) : 0;
+    var craneBadgeColor = '#ffbf16', craneBadgeText = '#172b3a';
+    if(craneTonValue === 13){ craneBadgeColor = '#1677d2'; craneBadgeText = '#ffffff'; }
+    else if(craneTonValue === 16){ craneBadgeColor = '#ffbf16'; craneBadgeText = '#172b3a'; }
+    else if(craneTonValue === 25){ craneBadgeColor = '#e11919'; craneBadgeText = '#ffffff'; }
+    else if(craneTonValue === 50){ craneBadgeColor = '#e67e22'; craneBadgeText = '#ffffff'; }
+    else if(craneTonValue === 70){ craneBadgeColor = '#16834a'; craneBadgeText = '#ffffff'; }
+    else if(craneTonValue === 100){ craneBadgeColor = '#7738a8'; craneBadgeText = '#ffffff'; }
+    var loadTonValue = (function(){ var v=parseOpt(loadWeight); return (v!==null && !isNaN(v) && v>=0) ? v.toFixed(1) : '？'; })();
+    // 左側：選定クレーン、その下に吊り荷重量
+    o += '<rect x="7" y="5" width="116" height="38" rx="6" fill="'+craneBadgeColor+'" stroke="'+(craneTonValue===16?'#e89500':craneBadgeColor)+'" stroke-width="1.2"/>';
+    o += '<text x="65" y="15" text-anchor="middle" font-size="7.5" font-weight="800" fill="'+craneBadgeText+'">選定クレーン</text>';
+    o += '<text x="65" y="36" text-anchor="middle" font-size="19" font-weight="900" fill="'+craneBadgeText+'">'+craneTonNumber+'</text>';
+    o += '<rect x="7" y="46" width="116" height="31" rx="6" fill="#111820" stroke="#ffffff" stroke-width="1.2"/>';
+    o += '<text x="65" y="56" text-anchor="middle" font-size="6.8" font-weight="700" fill="#d7e0e8">吊り荷の重さ</text>';
+    o += '<text x="65" y="72" text-anchor="middle" font-size="15" font-weight="900" fill="#ffffff">'+loadTonValue+'t</text>';
+    // 右側：障害物から吊り位置までの距離と障害物の高さ
+    var obstacleGapValue = (dObs !== null && !isNaN(dObs) && R >= dObs) ? (R-dObs).toFixed(1)+'m' : '—';
+    var obstacleHeightValue = (hObs !== null && !isNaN(hObs) && hObs > 0) ? hObs.toFixed(1)+'m' : '—';
+    o += '<rect x="197" y="5" width="116" height="38" rx="6" fill="#e9edf1" stroke="#cbd5df" stroke-width="1.2"/>';
+    o += '<text x="255" y="15" text-anchor="middle" font-size="7.1" font-weight="800" fill="#263746">障害物から吊り位置まで</text>';
+    o += '<text x="255" y="36" text-anchor="middle" font-size="17" font-weight="900" fill="#172b3a">'+obstacleGapValue+'</text>';
+    o += '<rect x="197" y="46" width="116" height="31" rx="6" fill="#e9edf1" stroke="#cbd5df" stroke-width="1.2"/>';
+    o += '<text x="255" y="56" text-anchor="middle" font-size="7.1" font-weight="800" fill="#263746">障害物の高さ</text>';
+    o += '<text x="255" y="72" text-anchor="middle" font-size="15" font-weight="900" fill="#172b3a">'+obstacleHeightValue+'</text>';
+    // 地面
+    o += '<rect x="0" y="'+Y(0)+'" width="'+W+'" height="'+(H-base)+'" fill="#e3dcc6"/>';
+    o += '<line x1="0" y1="'+Y(0)+'" x2="'+W+'" y2="'+Y(0)+'" stroke="#8a8272" stroke-width="1.5"/>';
+    // 障害物（建物）
+    var hTop = Y(hObs);
+    o += '<rect x="'+X(obsX)+'" y="'+hTop+'" width="'+(obsW*sc).toFixed(1)+'" height="'+(hObs*sc).toFixed(1)+'" fill="url(#hatch)" stroke="#c98a2b" stroke-width="1.5"/>';
+    // クレーン本体
+    o += '<rect x="'+X(-3)+'" y="'+Y(1.7)+'" width="'+(5.4*sc).toFixed(1)+'" height="'+(1.3*sc).toFixed(1)+'" rx="2" fill="#3a4048"/>';
+    o += '<rect x="'+X(-2.2)+'" y="'+Y(P.h0+0.2)+'" width="'+(3.2*sc).toFixed(1)+'" height="'+((P.h0+0.2-1.7)*sc).toFixed(1)+'" rx="2" fill="#252a30"/>';
+    o += '<circle cx="'+X(-1.9)+'" cy="'+Y(0.45)+'" r="'+(0.45*sc).toFixed(1)+'" fill="#1b1a17"/><circle cx="'+X(1.2)+'" cy="'+Y(0.45)+'" r="'+(0.45*sc).toFixed(1)+'" fill="#1b1a17"/>';
+    // 旋回中心
+    o += L(0,0,0,P.h0+1,'#8a8272',1,'2 2');
+    // ブーム・フック・吊荷
+    var bcol = sel.ok ? '#3f7ee8' : '#e2574c';
+    if(sel.angle !== null){
+      if(sel.poly){
+        o += L(sel.poly[0][0], sel.poly[0][1], sel.poly[1][0], sel.poly[1][1], bcol, 5);
+        o += L(sel.poly[1][0], sel.poly[1][1], sel.poly[2][0], sel.poly[2][1], bcol, 3);
+      } else {
+        o += L(P.r0,P.h0,R,sel.tip,bcol,5);
+      }
+      // フックから吊り荷までの線と、吊り荷重量を表示するイラスト
+      var loadY = 1.15;
+      var loadW = 1.45, loadH = 0.62;
+      o += L(R,sel.tip,R,loadY + loadH,'#3a4048',1.5,'3 2');
+      o += '<path d="M '+X(R-0.16)+' '+Y(loadY+loadH+0.12)+' q 0 0.22 0.18 0.22 q 0.18 0 0.18 -0.22" fill="none" stroke="#3a4048" stroke-width="1.8"/>';
+      o += '<rect x="'+X(R-loadW/2)+'" y="'+Y(loadY+loadH)+'" width="'+(loadW*sc).toFixed(1)+'" height="'+(loadH*sc).toFixed(1)+'" rx="3" fill="#1769c2" stroke="#ffffff" stroke-width="1.2"/>';
+      var lwDisplay = parseOpt(loadWeight);
+      var lwText = (lwDisplay !== null && !isNaN(lwDisplay) && lwDisplay >= 0) ? lwDisplay.toFixed(1) + 't' : '？t';
+      // 吊り荷の重量は、吊り荷イラストの左側に表示する
+      var weightLabelX = X(R - loadW/2 - 0.28);
+      var weightLabelY = Y(loadY + loadH/2);
+      var weightFont = Math.max(8, Math.min(12, 10*sc/2.5)).toFixed(1);
+      o += '<text x="'+weightLabelX+'" y="'+weightLabelY+'" text-anchor="end" dominant-baseline="middle" font-size="'+weightFont+'" font-weight="900" fill="#1769c2" stroke="#ffffff" stroke-width="2.5" paint-order="stroke">'+lwText+'</text>';
+      var tipBad = (sel.reason.indexOf("高さ不足") === 0);
+      o += '<circle cx="'+X(R)+'" cy="'+Y(sel.tip)+'" r="4" fill="'+(tipBad?'#e2574c':'#fff')+'" stroke="'+bcol+'" stroke-width="2"/>';
+      if(sel.boomAt !== null){
+        var bad = (sel.reason === "ブーム干渉");
+        o += '<circle cx="'+X(obsX)+'" cy="'+Y(sel.boomAt)+'" r="5" fill="'+(bad?'#e2574c':'#1f8a4c')+'" stroke="#fff" stroke-width="1.5"/>';
+      }
+    } else {
+      o += '<text x="'+(W/2)+'" y="30" text-anchor="middle" font-size="11" font-weight="800" fill="#c8412f">ブームが届きません</text>';
+    }
+    // 障害物の高さ（紫）
+    var hx = Math.min(W - 6, parseFloat(X(obsX + obsW)) + 7);
+    o += '<line x1="'+hx+'" y1="'+Y(0)+'" x2="'+hx+'" y2="'+hTop+'" stroke="#8e44ad" stroke-width="2"/>';
+    o += '<line x1="'+(hx-4)+'" y1="'+hTop+'" x2="'+(hx+4)+'" y2="'+hTop+'" stroke="#8e44ad" stroke-width="2"/>';
+    var tx = Math.max(34, Math.min(W - 34, parseFloat(X(obsX)) + obsW * sc / 2));
+    var ty = Math.max(11, parseFloat(hTop) - 5);
+    o += T(tx.toFixed(1), ty.toFixed(1), 11, '#8e44ad', '高さ ' + hObs.toFixed(1) + 'm');
+    // 半径の寸法線
+    function dim(x2, y, col, label){
+      var x1p = parseFloat(X(0)), x2p = parseFloat(X(x2)), mid = (x1p + x2p) / 2, yy = base + y;
+      var r = '<line x1="'+x1p+'" y1="'+yy+'" x2="'+x2p+'" y2="'+yy+'" stroke="'+col+'" stroke-width="2"/>';
+      r += '<line x1="'+x1p+'" y1="'+(yy-4)+'" x2="'+x1p+'" y2="'+(yy+4)+'" stroke="'+col+'" stroke-width="2"/>';
+      r += '<line x1="'+x2p+'" y1="'+(yy-4)+'" x2="'+x2p+'" y2="'+(yy+4)+'" stroke="'+col+'" stroke-width="2"/>';
+      r += T(mid.toFixed(1), (yy+3.5), 10.5, col, label);
+      return r;
+    }
+    if(dObs !== null) o += dim(dObs, 11, '#0e9aa7', '障害物 ' + dObs.toFixed(1) + 'm');
+    o += dim(R, 28, '#3a4048', '吊り位置 ' + R.toFixed(1) + 'm');
+    o += '</svg>';
+    obsDiagram.innerHTML = o;
+  }
+
+  function shortReason(r){
+    if(r.indexOf("高さ不足") === 0) return "高さ不足";
+    if(r === "ブーム干渉") return "干渉";
+    if(r === "半径が届かない") return "半径外";
+    if(r === "起伏角超過") return "角度外";
+    if(r === "能力表外") return "表外";
+    return r;
+  }
+
+
+  // 刻み表（ブーム角なし）：ブーム付け根の位置を、表の最小半径（と、角度範囲があれば最大半径）に合わせて補正する
+  function jibCalibrateR0(opt, L, j, off, tbl, maxAngle){
+    var D = Math.PI / 180, rows = tbl.rows, grid = opt.gridR;
+    var f = function(th){ return L * Math.cos(th * D) + j * Math.cos((th - off) * D); };
+    var first = rows[0][0], last = rows[rows.length - 1][0];
+    var gi = grid.indexOf(first), gl = grid.indexOf(last);
+    var prev = gi > 0 ? grid[gi - 1] : null, next = gl + 1 < grid.length ? grid[gl + 1] : null;
+    var thMax = tbl.deg ? tbl.deg[1] : maxAngle;
+    var lo = prev !== null ? prev - f(thMax) : -Infinity, hi = first - f(thMax);
+    if(tbl.deg){
+      lo = Math.max(lo, last - f(tbl.deg[0]));
+      hi = Math.min(hi, next !== null ? next - f(tbl.deg[0]) : Infinity);
+    }
+    if(isFinite(lo) && isFinite(hi)) return (lo + hi) / 2;
+    return isFinite(lo) ? lo + 0.25 : hi - 0.5;
+  }
+  // 半径 R になるブーム角を、二分法で求める（範囲の外は端の角度）
+  function jibAngleFor(L, j, off, r0, thMin, thMax, R){
+    var D = Math.PI / 180;
+    var g = function(th){ return r0 + L * Math.cos(th * D) + j * Math.cos((th - off) * D); };
+    if(R >= g(thMin)) return thMin;
+    if(R <= g(thMax)) return thMax;
+    var lo = thMin, hi = thMax;
+    for(var i = 0; i < 40; i++){ var mid = (lo + hi) / 2; if(g(mid) > R) lo = mid; else hi = mid; }
+    return (lo + hi) / 2;
+  }
+
+  // 指定したブーム付け根の位置・角度での、先端の高さと、障害物の位置でのブーム・ジブの高さ
+  function jibGeom(c, L, jl, jo, thDeg, px, dObs){
+    var D = Math.PI / 180, th = thDeg * D, ja = (thDeg - jo) * D, h0 = c.pivot.h0;
+    var xB = L * Math.cos(th), yB = L * Math.sin(th);
+    var xJ = xB + jl * Math.cos(ja), yJ = yB + jl * Math.sin(ja);
+    var g = { th: thDeg, px: px, tip: h0 + yJ, boomAt: null,
+              poly: [[px, h0], [px + xB, h0 + yB], [px + xJ, h0 + yJ]] };
+    if(dObs !== null && dObs > px && dObs < px + xJ){
+      g.boomAt = (dObs <= px + xB) ? h0 + (dObs - px) * Math.tan(th) : h0 + yB + (dObs - px - xB) * Math.tan(ja);
+    }
+    return g;
+  }
+
+  // ジブ付き：ブーム角つきの表はそのまま。刻み表はブーム角を推定し、位置の誤差を見込んで厳しい側で判定する
+  function evalJibCombo(c, jl, jo, R, hObs, dObs){
+    var idx = selectedBoomIndex, tbl = jibTable(c, jl, idx, jo);
+    var opt = c.jib.options.filter(function(x){ return x.length === jl; })[0];
+    var res = { jl: jl, jo: jo, angle: null, tip: null, boomAt: null, cap: null, ok: false, reason: "", poly: null, rowR: null, est: false, estErr: 0, boom: c.boomLengths[idx] };
+    var jr = lookupJibFor(c, jl, idx, jo, R);
+    if(jr.under){ res.reason = "半径不足"; return res; }
+    if(jr.over){ res.reason = "半径外"; return res; }
+    var row = jr.row, L = res.boom, geoms = [], center;
+    if(row.length > 2){
+      var D = Math.PI / 180, xJ0 = L * Math.cos(row[2] * D) + jl * Math.cos((row[2] - jo) * D);
+      center = jibGeom(c, L, jl, jo, row[2], row[0] - xJ0, dObs);
+      geoms = [center];
+    } else {
+      res.est = true;
+      res.estErr = tbl.deg ? 1.0 : 2.0;   // 位置の誤差の見積り（m）
+      var thMin = tbl.deg ? tbl.deg[0] : 5, thMax = tbl.deg ? tbl.deg[1] : c.pivot.maxAngle;
+      var r0c = jibCalibrateR0(opt, L, jl, jo, tbl, c.pivot.maxAngle);
+      [-res.estErr, 0, res.estErr].forEach(function(dv){
+        var r0 = r0c + dv;
+        geoms.push(jibGeom(c, L, jl, jo, jibAngleFor(L, jl, jo, r0, thMin, thMax, row[0]), r0, dObs));
+      });
+      center = geoms[1];
+    }
+    res.rowR = row[0]; res.angle = center.th; res.cap = row[1]; res.poly = center.poly;
+    // 誤差を見込んだ「低い側」の値で判定する
+    res.tip = Math.min.apply(null, geoms.map(function(g){ return g.tip; }));
+    var bs = geoms.filter(function(g){ return g.boomAt !== null; }).map(function(g){ return g.boomAt; });
+    res.boomAt = bs.length ? Math.min.apply(null, bs) : null;
+    var hn = hObs > 0 ? hObs + OBS_MARGIN : 0;
+    if(res.boomAt !== null && res.boomAt < hn){ res.reason = "ブーム干渉"; return res; }
+    if(res.tip < hn){ res.reason = "高さ不足 " + (res.tip - hn).toFixed(1) + "m"; return res; }
+    res.ok = true; res.reason = "OK";
+    return res;
+  }
+
+  function checkObstacleJib(c, R, hObs, dObs){
+    var need = hObs + OBS_MARGIN;
+    var combos = [];
+    jibOptionsForBoom(c, selectedBoomIndex).forEach(function(o){
+      Object.keys(o.booms[selectedBoomIndex]).map(Number).forEach(function(k){ combos.push(evalJibCombo(c, o.length, k, R, hObs, dObs)); });
+    });
+    var sel = combos.filter(function(x){ return x.jl === jibLen && x.jo === jibOff; })[0];
+    drawDiagram(c, sel.rowR !== null ? sel.rowR : R, hObs, dObs, sel, 0);
+
+    var anyEst = combos.some(function(x){ return x.est; });
+    var line1 = (sel.tip !== null) ? '先端 ' + sel.tip.toFixed(1) + 'm／必要 ' + need.toFixed(1) + 'm・ブーム角' + (sel.est ? '約' : '') + Math.round(sel.angle) + '°・' + c80(sel.cap).toFixed(2) + 't（' + sel.cap.toFixed(2) + 't）' : '';
+    var line2 = (sel.boomAt !== null) ? '<br>障害物位置のブーム・ジブ ' + sel.boomAt.toFixed(1) + 'm／必要 ' + need.toFixed(1) + 'm' : '';
+    var label = 'ジブ' + fj(sel.jl) + 'm・' + sel.jo + '°';
+    if(sel.ok){
+      obsSummary.className = "obs-summary ok";
+      obsSummary.innerHTML = '<span class="big">OK：届く（' + label + '）</span>' + line1 + line2;
+    } else {
+      obsSummary.className = "obs-summary ng";
+      obsSummary.innerHTML = '<span class="big">' + (sel.reason === "ブーム干渉" ? "NG：ブーム・ジブが干渉" : "NG：" + sel.reason) + '（' + label + '）</span>' + line1 + line2;
+    }
+
+    var html = '<div class="obs-head"><div>ジブ</div><div>ブーム角</div><div>先端</div><div>能力80%</div><div>判定</div></div>';
+    combos.forEach(function(r){
+      html += '<div class="obs-row ' + (r.ok ? "ok" : "ng") + (r === sel ? " sel" : "") + '">' +
+        '<div>' + fj(r.jl) + '/' + r.jo + '°</div>' +
+        '<div>' + (r.angle === null ? "－" : (r.est ? "約" : "") + Math.round(r.angle) + "°") + '</div>' +
+        '<div>' + (r.tip === null ? "－" : r.tip.toFixed(1)) + '</div>' +
+        '<div>' + (r.cap === null ? "－" : c80(r.cap).toFixed(2)) + '</div>' +
+        '<div class="verdict">' + (r.ok ? "OK" : shortReason(r.reason)) + '</div></div>';
+    });
+    obsTable.innerHTML = html;
+
+    var okList = combos.filter(function(x){ return x.ok; }).sort(function(a, b){ return b.cap - a.cap; });
+    obsReco.textContent = okList.length ? "届くジブの中で能力が最大：" + fj(okList[0].jl) + "m・" + okList[0].jo + "°（" + c80(okList[0].cap).toFixed(2) + "t／定格 " + okList[0].cap.toFixed(2) + "t）" : "どのジブの組み合わせでもNG。位置や半径の見直しが必要です。";
+    obsWarn.innerHTML = "※ ジブの位置は、性能表の作業半径から換算した概算です。ブーム付け根の高さ（" + c.pivot.h0.toFixed(1) + "m）も概算です。" +
+      (anyEst ? "<br>※ この機種の表にはブーム角がないため、ブーム角と位置を推定しています（誤差の見積り約" + (combos.some(function(x){ return x.estErr >= 2; }) ? "2" : "1") + "m）。誤差を見込んで、低い側の値で判定しています。" : "") +
+      "<br>※ 能力は定格荷重の80%（カッコ内が定格荷重）。";
+    return sel;
+  }
+
+  function checkObstacle(R){
+    var c = CRANES[currentCrane];
+    var hObs = parseOpt(obsHeight);
+    var dObs0 = parseOpt(obsDist);
+    if(hObs === null){
+      if(dObs0 !== null && !isNaN(dObs0)){
+        obsCard.style.display = "block";
+        obsDiagram.innerHTML = ""; obsTable.innerHTML = ""; obsReco.textContent = ""; obsWarn.textContent = "";
+        obsSummary.className = "obs-summary warn";
+        obsSummary.innerHTML = '<span class="big">障害物の高さも入力してください</span>距離だけでは判定できません。';
+      } else { obsCard.style.display = "none"; }
+      return null;
+    }
+    var margin = OBS_MARGIN;
+    var dObs = parseOpt(obsDist); if(dObs !== null && isNaN(dObs)) dObs = null;   // 旋回中心から障害物まで
+    var boomClr = OBS_MARGIN;
+
+    obsCard.style.display = "block";
+    if(isNaN(hObs) || hObs < 0){
+      obsSummary.className = "obs-summary ng";
+      obsSummary.innerHTML = '<span class="big">入力エラー</span>障害物の高さを正しく入力してください。';
+      obsTable.innerHTML = ""; obsReco.textContent = ""; obsWarn.textContent = ""; obsDiagram.innerHTML = "";
+      return null;
+    }
+
+    if(jibActive()){
+      if(jibHasGeometry(c)) return checkObstacleJib(c, R, hObs, dObs);
+      obsDiagram.innerHTML = ""; obsTable.innerHTML = ""; obsReco.textContent = ""; obsWarn.textContent = "";
+      obsSummary.className = "obs-summary warn";
+      obsSummary.innerHTML = '<span class="big">ジブ使用時の障害物は判定できません</span>この機種のジブ付き表には、ブーム角度の情報がないためです。担当者が別途確認します。';
+      return null;
+    }
+
+    var need = hObs + margin;
+    var rows = c.boomLengths.map(function(_, i){ return evalBoom(c, i, R, need, hObs, dObs, boomClr); });
+    var sel = rows[selectedBoomIndex];
+
+    drawDiagram(c, R, hObs, dObs, sel, boomClr);
+
+    // 選択中ブームの結論
+    var line1 = "";
+    if(sel.tip !== null) line1 = '先端 ' + sel.tip.toFixed(1) + 'm／必要 ' + need.toFixed(1) + 'm・' + sel.angle.toFixed(0) + '°' + (sel.cap !== null ? '・' + c80(sel.cap).toFixed(2) + 't（' + sel.cap.toFixed(2) + 't）' : '');
+    var line2 = (sel.boomAt !== null) ? '<br>障害物位置のブーム ' + sel.boomAt.toFixed(1) + 'm／必要 ' + (hObs + boomClr).toFixed(1) + 'm' : '';
+    if(sel.ok){
+      obsSummary.className = "obs-summary ok";
+      obsSummary.innerHTML = '<span class="big">OK：届く（' + boomLabelM(c, sel.idx) + '）</span>' + line1 + line2;
+    } else {
+      obsSummary.className = "obs-summary ng";
+      var head = (sel.reason === "ブーム干渉") ? "NG：ブームが干渉" : "NG：" + sel.reason;
+      obsSummary.innerHTML = '<span class="big">' + head + '（' + boomLabelM(c, sel.idx) + '）</span>' + line1 + line2;
+    }
+
+    // 全ブームの一覧
+    var html = '<div class="obs-head"><div>ブーム</div><div>角度</div><div>先端</div><div>能力80%</div><div>判定</div></div>';
+    rows.forEach(function(r){
+      html += '<div class="obs-row ' + (r.ok ? "ok" : "ng") + (r.idx === selectedBoomIndex ? " sel" : "") + '">' +
+        '<div>' + boomLabel(c, r.idx) + '</div>' +
+        '<div>' + (r.angle === null ? "－" : r.angle.toFixed(0) + "°") + '</div>' +
+        '<div>' + (r.tip === null ? "－" : r.tip.toFixed(1)) + '</div>' +
+        '<div>' + (r.cap === null ? "－" : c80(r.cap).toFixed(2)) + '</div>' +
+        '<div class="verdict">' + (r.ok ? "OK" : shortReason(r.reason)) + '</div></div>';
+    });
+    obsTable.innerHTML = html;
+
+    // おすすめ（OKの中で最短ブーム）
+    var best = null;
+    for(var i=0; i<rows.length; i++){ if(rows[i].ok){ best = rows[i]; break; } }
+    obsReco.textContent = best ? "届く最短ブーム：" + boomLabelM(c, best.idx) + "（" + c80(best.cap).toFixed(2) + "t／定格 " + best.cap.toFixed(2) + "t）" : "どのブーム長でもNG。位置や半径の見直しが必要です。";
+
+    var warns = [];
+    if(dObs === null) warns.push("※ 障害物の半径が未入力のため、ブーム干渉は未判定（高さのみ）。");
+    else if(dObs >= R) warns.push("※ 障害物が作業半径より外側のため、ブーム干渉は対象外。");
+    else if(dObs <= c.pivot.r0) warns.push("※ 障害物がクレーンの後ろ側のため、ブーム干渉は対象外。");
+    if(!c.pivot.verified){
+      warns.push("※ ブーム付け根の位置（後ろ" + (-c.pivot.r0).toFixed(1) + "m・高さ" + c.pivot.h0.toFixed(1) + "m）は概算です。");
+    }
+    warns.push("※ 能力は定格荷重の80%（カッコ内が定格荷重）。実際の吊荷重と比較してください。");
+    obsWarn.innerHTML = warns.join("<br>");
+    return sel;
+  }
+
+
+  /* ---------- 注文フロー ---------- */
+  var screenStart = $("screenStart"), screenCalc = $("screenCalc");
+  var dateError = $("dateError"), orderDate = $("orderDate"), startBtn = $("startBtn"), backBtn = $("backBtn"), datePillText = $("datePillText");
+  var WEEK = ["日","月","火","水","木","金","土"];
+
+  function parseDate(v){
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || "");
+    return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null;
+  }
+  function fmtDateLong(d){ return d.getFullYear() + "年" + (d.getMonth() + 1) + "月" + d.getDate() + "日(" + WEEK[d.getDay()] + ")"; }
+  function fmtDateShort(d){ return (d.getMonth() + 1) + "/" + d.getDate() + "(" + WEEK[d.getDay()] + ")"; }
+
+  // 選べるのは「明日以降」（当日・過去は不可）
+  function tomorrowDate(){
+    var t = new Date();
+    return new Date(t.getFullYear(), t.getMonth(), t.getDate() + 1);
+  }
+  function isAllowedDate(d){ return !!d && d.getTime() >= tomorrowDate().getTime(); }
+
+  (function setMinDate(){
+    var t = tomorrowDate();
+    var mm = ("0" + (t.getMonth() + 1)).slice(-2), dd = ("0" + t.getDate()).slice(-2);
+    orderDate.min = t.getFullYear() + "-" + mm + "-" + dd;
+  })();
+
+  function updateStartBtn(){
+    var d = parseDate(orderDate.value);
+    var bad = !!d && !isAllowedDate(d);
+    startBtn.disabled = !isAllowedDate(d);
+    dateError.style.display = bad ? "block" : "none";
+  }
+  orderDate.addEventListener("input", updateStartBtn);
+  orderDate.addEventListener("change", updateStartBtn);
+
+  var screenConfirm = $("screenConfirm");
+  function showScreen(which){
+    [[screenStart, "start"], [$("screenCond"), "cond"], [screenCalc, "calc"], [screenConfirm, "confirm"], [$("screenDone"), "done"]].forEach(function(p){
+      p[0].classList.toggle("is-hidden", p[1] !== which);
+    });
+    window.scrollTo(0, 0);
+    if(typeof syncSliders === "function") syncSliders();
+  }
+
+  startBtn.addEventListener("click", function(){
+    var d = parseDate(orderDate.value);
+    if(!isAllowedDate(d)) return;
+    datePillText.textContent = "📅 " + fmtDateShort(d);
+    showScreen("cond");
+  });
+  backBtn.addEventListener("click", function(){
+    showScreen("start");
+  });
+
+  // 今の判定（OK / NG と理由）
+  function currentJudgement(){
+    if(resultCard.classList.contains("state-ok")) return { ok: true, text: "" };
+    var v = resultValue.textContent.replace(/\s+/g, " ").trim(), dt = resultDetail.textContent.replace(/\s+/g, " ").trim();
+    return { ok: false, text: (v.indexOf("NG") === 0) ? dt : v + "：" + dt };
+  }
+
+  function buildOrderItems(){
+    var c = CRANES[currentCrane];
+    var judge = currentJudgement();
+    var hasCap = !!(lastHit && lastHit.value != null);
+    var d = parseDate(orderDate.value);
+    var boom = c.boomLengths[selectedBoomIndex];
+    var items = [
+      ["作業日", d ? fmtDateLong(d) : "未入力"],
+      ["クレーン", c.label + "（" + c.condition + "）"],
+      ["ブーム長", boomLong(c, selectedBoomIndex)],
+      ["作業半径", lastRadius.toFixed(1) + "m"]
+    ];
+    if(hasCap){
+      items.push(["最大吊上げ能力（定格の80%）", c80(lastHit.value).toFixed(2) + "t", "cap"]);
+      items.push(["定格荷重", lastHit.value.toFixed(2) + "t", "rated"]);
+    } else {
+      items.push(["最大吊上げ能力", "表の範囲外（データなし）", "cap"]);
+    }
+    var lw = parseFloat(loadWeight.value);
+    if(lw > 0){
+      for(var li = 0; li < items.length; li++){
+        if(items[li][0] === "作業半径"){ items.splice(li + 1, 0, ["吊り荷の重さ", lw.toFixed(1) + "t"]); break; }
+      }
+    }
+    if(c.reeving && c.reeving[selectedBoomIndex] && !jibActive()){
+      items.splice(3, 0, ["巻掛本数", c.reeving[selectedBoomIndex] + "本"]);
+    }
+    if(jibActive()){
+      items.splice(3, 0, ["ジブ", fj(jibLen) + "m／オフセット" + jibOff + "°" + (hasCap && lastHit.jibAngle !== null && lastHit.jibAngle !== undefined ? "／ブーム角" + lastHit.jibAngle + "°" : "")]);
+    }
+    if(jibActive() && c.jib.note){ items.splice(4, 0, ["ジブ条件", c.jib.orderNote || c.jib.note]); }
+    var hObs = parseOpt(obsHeight), dObs = parseOpt(obsDist);
+    if(hObs !== null && !isNaN(hObs)){
+      items.push(["障害物", (dObs !== null && !isNaN(dObs) ? "半径" + dObs.toFixed(1) + "m／" : "") + "高さ" + hObs.toFixed(1) + "m" + (judge.ok ? "（判定OK）" : "")]);
+    }
+    if(!judge.ok){ items.push(["判定", "NG（" + judge.text + "）", "ng"]); }
+    return items;
+  }
+
+  var currentItems = [];
+  var orderNG = false;
+
+  decideBtn.addEventListener("click", function(){
+    if(decideBtn.disabled || lastRadius === null) return;
+    var judge = currentJudgement();
+    orderNG = !judge.ok;
+    currentItems = buildOrderItems();
+    var warn = $("confirmWarn");
+    if(orderNG){
+      warn.textContent = "⚠ この条件は「NG」です（" + judge.text + "）。このまま注文すると、担当者が内容を確認して、ご連絡します。";
+      warn.style.display = "block";
+    } else { warn.style.display = "none"; }
+    var html = "";
+    var cc = CRANES[currentCrane];
+    var badge = $("confirmCrane");
+    badge.innerHTML = '<div class="crane-badge"><div class="big">' + cc.label.replace("t", "") + '<small>t</small></div><div class="txt"><b>' + cc.label + '吊りクレーン</b>' + cc.condition + '</div></div>';
+    badge.firstChild.style.setProperty("--accent", cc.accent);
+    badge.firstChild.style.setProperty("--on", cc.on || "#fff");
+    currentItems.forEach(function(it){
+      if(it[0] === "クレーン") return;   // バッジで表示するため一覧からは除く
+      html += '<div class="confirm-row' + (it[2] ? " " + it[2] : "") + '"><span class="k">' + it[0] + '</span><span class="v">' + it[1] + '</span></div>';
+    });
+    $("confirmRows").innerHTML = html;
+    sendError.style.display = "none"; fallbackBtn.style.display = "none";
+    updateConfirmBtn();
+    showScreen("confirm");
+  });
+
+  $("editBtn").addEventListener("click", function(){ showScreen("calc"); });
+
+  var custCompany = $("custCompany"), custSite = $("custSite"), custPerson = $("custPerson"), custPhone = $("custPhone"), confirmBtn = $("confirmBtn");
+  var sendError = $("sendError"), fallbackBtn = $("fallbackBtn");
+  var SEND_LABEL = "注文確定（メールを送信）";
+
+  function updateConfirmBtn(){
+    confirmBtn.disabled = !(custCompany.value.trim() && custSite.value.trim() && custPerson.value.trim() && custPhone.value.trim());
+  }
+  [custCompany, custSite, custPerson, custPhone].forEach(function(el){ el.addEventListener("input", updateConfirmBtn); });
+
+  function orderSubject(){
+    var d = parseDate(orderDate.value);
+    return (orderNG ? "【要確認】" : "") + "【クレーンご注文】" + (d ? fmtDateLong(d) : "") + " " + custCompany.value.trim() + " " + custSite.value.trim();
+  }
+  function orderText(){
+    var lines = ["下記の内容で注文いたします。", ""];
+    currentItems.forEach(function(it){ lines.push(it[0] + "：" + it[1]); });
+    lines.push("", "会社名：" + custCompany.value.trim(), "現場名：" + custSite.value.trim(), "担当者：" + custPerson.value.trim(), "電話番号：" + custPhone.value.trim(), "", "よろしくお願いいたします。");
+    return lines.join("\n");
+  }
+  function openMailApp(){
+    var url = "mailto:" + ORDER_MAIL_TO + "?subject=" + encodeURIComponent(orderSubject()) + "&body=" + encodeURIComponent(orderText().replace(/\n/g, "\r\n"));
+    window.location.href = url;
+  }
+  fallbackBtn.addEventListener("click", openMailApp);
+
+  confirmBtn.addEventListener("click", function(){
+    if(confirmBtn.disabled) return;
+    sendError.style.display = "none"; fallbackBtn.style.display = "none";
+    if(!ORDER_ENDPOINT){ openMailApp(); return; }   // 送信サービス未設定：メールアプリで送る
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = "送信中…";
+    var payload = {
+      access_key: ORDER_ACCESS_KEY, subject: orderSubject(), _subject: orderSubject(),
+      from_name: custCompany.value.trim() + " " + custPerson.value.trim(), company: custCompany.value.trim(), site: custSite.value.trim(), name: custPerson.value.trim(), phone: custPhone.value.trim(),
+      message: orderText()
+    };
+    fetch(ORDER_ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" }, body: JSON.stringify(payload) })
+      .then(function(res){
+        return res.json().catch(function(){ return {}; }).then(function(d){
+          if(!res.ok || d.success === false) throw new Error("サーバーの応答 " + res.status + (d.message ? "：" + d.message : ""));
+          confirmBtn.textContent = SEND_LABEL;
+          $("doneNote").textContent = d.message ? "（送信サービスの応答：" + d.message + "）" : "";
+          showScreen("done");
+        });
+      })
+      .catch(function(err){
+        confirmBtn.textContent = SEND_LABEL;
+        updateConfirmBtn();
+        var msg = (err && err.message) || "";
+        var why = (err && err.name === "TypeError") || /failed to fetch|load failed|network/i.test(msg) ? "通信できませんでした（電波、または接続先の制限）" : (msg || "不明");
+        sendError.textContent = "送信できませんでした。（原因：" + why + "）通信状態を確認して、もう一度お試しください。";
+        sendError.style.display = "block";
+        fallbackBtn.style.display = "block";
+      });
+  });
+
+  $("doneBtn").addEventListener("click", function(){
+    [custCompany, custSite, custPerson, custPhone, condLoad, condRadius, condDist, condHeight, loadWeight, obsDist, obsHeight, orderDate].forEach(function(el){ el.value = ""; });
+    autoNote.style.display = "none";
+    manualOverride = false; baseRadius = 6.0; jibLen = 0; jibOff = 5;
+    CRANE_ORDER.forEach(function(k){ boomIndexByCrane[k] = Math.max(0, CRANES[k].boomLengths.length - 1); });
+    radiusInput.value = "";
+    selectCrane("13", true);
+    updateStartBtn(); updateConfirmBtn();
+    showScreen("start");
+  });
+
+
+  /* ---------- 条件入力ページ → いちばん小さいクレーンを選定 ---------- */
+  var condLoad = $("condLoad"), condRadius = $("condRadius"), condDist = $("condDist"), condHeight = $("condHeight");
+  var condError = $("condError");
+
+  function bindStep(minusId, plusId, el, step, optional){
+    function nudge(delta){
+      var v = parseFloat(el.value);
+      if(isNaN(v)) v = 0;
+      v = Math.round((v + delta) * 10) / 10;
+      el.value = (v <= 0) ? (optional ? "" : "0.0") : v.toFixed(1);
+      syncSliders();
+    }
+    $(minusId).addEventListener("click", function(){ nudge(-step); });
+    $(plusId).addEventListener("click", function(){ nudge(step); });
+  }
+  bindStep("condLoadMinus", "condLoadPlus", condLoad, 0.5, false);
+  bindStep("condRadiusMinus", "condRadiusPlus", condRadius, 0.5, false);
+  bindStep("condDistMinus", "condDistPlus", condDist, 0.5, true);
+  bindStep("condHeightMinus", "condHeightPlus", condHeight, 1, true);
+  [condLoad, condRadius, condDist, condHeight].forEach(function(el){ el.addEventListener("input", function(){ syncSliders(); }); });
+
+  function c80ok(rated, load){ return c80(rated) >= load - 1e-9; }
+
+  // 障害物がある場合、障害物の半径より最低2m奥まで届く作業半径を選定条件にする。
+  function targetRadiusForObstacle(R, dObs){
+    return (dObs !== null && isFinite(dObs)) ? Math.max(R, dObs + 2.0) : R;
+  }
+
+  // 選定画面に、障害物の位置から吊り位置までの半径方向の距離を表示する。
+  function obstacleToLiftDistanceText(R, dObs){
+    if(dObs === null || !isFinite(dObs) || !isFinite(R)) return "";
+    var gap = R - dObs;
+    return "\n障害物から吊り位置まで：約 " + gap.toFixed(1) + "m（吊り位置半径 " + R.toFixed(1) + "m − 障害物半径 " + dObs.toFixed(1) + "m）";
+  }
+
+  // 条件に合う、いちばん小さいクレーンの構成を探す（障害物があれば2m奥まで届く半径で能力を判定）
+  function findBestConfig(load, R, dObs, hObs){
+    R = targetRadiusForObstacle(R, dObs);
+    var saved = { crane: currentCrane, boom: selectedBoomIndex, jl: jibLen, jo: jibOff };
+    var found = null;
+    try{
+      for(var ci = 0; ci < CRANE_ORDER.length && !found; ci++){
+        var key = CRANE_ORDER[ci], c = CRANES[key];
+        if(c.pending) continue;
+        currentCrane = key;
+        for(var idx = 0; idx < c.boomLengths.length; idx++){
+          selectedBoomIndex = idx;
+          var hit = lookupCapacity(c, R, idx);
+          if(!hit || hit.value == null || !c80ok(hit.value, load)) continue;
+          if(hObs !== null){
+            var ev = evalBoom(c, idx, R, hObs + OBS_MARGIN, hObs, dObs, OBS_MARGIN);
+            if(!ev.ok) continue;
+          }
+          found = { key: key, idx: idx, jl: 0, jo: 5, cap: hit.value };
+          break;
+        }
+        if(found || hObs === null || !c.jib) continue;
+        var best = null;
+        c.jib.options.forEach(function(o){
+          Object.keys(o.booms).map(Number).forEach(function(bi){
+            Object.keys(o.booms[bi]).map(Number).forEach(function(off){
+              selectedBoomIndex = bi;
+              var ev = evalJibCombo(c, o.length, off, R, hObs, dObs);
+              if(ev.ok && c80ok(ev.cap, load) && (!best || ev.cap > best.cap)){
+                best = { key: key, idx: bi, jl: o.length, jo: off, cap: ev.cap };
+              }
+            });
+          });
+        });
+        if(best) found = best;
+      }
+    } finally {
+      currentCrane = saved.crane; selectedBoomIndex = saved.boom; jibLen = saved.jl; jibOff = saved.jo;
+    }
+    return found;
+  }
+
+  // 今の手動選択（クレーン・ブーム・ジブ）が条件を満たしているか
+  function configOK(load, R, d, h){
+    var c = CRANES[currentCrane];
+    if(jibActive()){
+      var jr = lookupJib(c, R);
+      if(!jr.row || !c80ok(jr.row[1], load)) return false;
+      if(h !== null){
+        if(!jibHasGeometry(c)) return false;
+        return evalJibCombo(c, jibLen, jibOff, R, h, d).ok;
+      }
+      return true;
+    }
+    var hit = lookupCapacity(c, R, selectedBoomIndex);
+    if(!hit || hit.value == null || !c80ok(hit.value, load)) return false;
+    if(h !== null && !evalBoom(c, selectedBoomIndex, R, h + OBS_MARGIN, h, d, OBS_MARGIN).ok) return false;
+    return true;
+  }
+
+  // 選定画面で吊り荷・作業半径・障害物を変更したら、条件に合う最小トン数を自動で再選定する。
+  function autoReselectForLoadRadius(){
+    var load = parseFloat(loadWeight.value);
+    var d = parseOpt(obsDist), h = parseOpt(obsHeight);
+    if(!(baseRadius > 0)) return;
+    if((d !== null && isNaN(d)) || (h !== null && isNaN(h)) || (d !== null && h === null)) return;
+    var R = targetRadiusForObstacle(baseRadius, d);   // 毎回、ユーザー入力から計算し直す
+    radiusInput.value = R.toFixed(1);
+    if(!(load > 0)) return;
+
+    if(manualOverride && configOK(load, R, d, h)){ calculate(); return; }
+
+    var best = findBestConfig(load, R, d, h);
+    var cond = "吊り荷 " + load.toFixed(1) + "t・作業半径 " + R.toFixed(1) + "m" +
+      (h !== null ? "・障害物 " + (d !== null ? "半径 " + d.toFixed(1) + "m／" : "") + "高さ " + h.toFixed(1) + "m" : "");
+    if(!best){
+      autoNote.textContent = cond + " に合うクレーンが見つかりません。条件を見直してください。" + obstacleToLiftDistanceText(R, d);
+      autoNote.style.display = "block";
+      syncSliders(); return;
+    }
+    manualOverride = false;
+    boomIndexByCrane[best.key] = best.idx;
+    selectCrane(best.key, true);
+    if(best.jl > 0){ jibLen = best.jl; jibOff = best.jo; buildJibSeg(); calculate(); }
+    var c = CRANES[best.key];
+    autoNote.textContent = "自動再選定：" + cond + " の条件に合う最小の " + c.label + "（ブーム " + boomLabelM(c, best.idx) +
+      (best.jl > 0 ? "＋ジブ" + fj(best.jl) + "m・" + best.jo + "°" : "") + "）です。" + obstacleToLiftDistanceText(R, d);
+    autoNote.style.display = "block";
+  }
+
+  function showCondError(msg){ condError.textContent = msg; condError.style.display = "block"; }
+
+  $("selectBtn").addEventListener("click", function(){
+    condError.style.display = "none";
+    var load = parseFloat(condLoad.value), R = parseFloat(condRadius.value);
+    if(!(load > 0) || !(R > 0)){ showCondError("吊り荷の重さと作業半径を、正しく入力してください。"); return; }
+    var d = parseOpt(condDist), h = parseOpt(condHeight);
+    if((d !== null && isNaN(d)) || (h !== null && isNaN(h))){ showCondError("障害物の距離と高さを、正しく入力してください。"); return; }
+    if(d !== null && h === null){ showCondError("障害物までの距離を入れたときは、障害物の高さも入れてください。"); return; }
+    baseRadius = R; manualOverride = false;
+    R = targetRadiusForObstacle(R, d);
+
+    var best = findBestConfig(load, R, d, h);
+    if(!best){
+      var relaxed = (h !== null) ? findBestConfig(load, R, null, null) : null;
+      showCondError(relaxed
+        ? "この障害物の条件では、合うクレーンが見つかりません。障害物がなければ " + CRANES[relaxed.key].label + " で足ります。障害物の距離や高さを見直してください。"
+        : "この吊り荷の重さと作業半径に合うクレーンが、見つかりません。重さか作業半径を見直してください。");
+      return;
+    }
+
+    // 選定画面へ：4つの条件を入れた状態で、いちばん小さいクレーンを開く
+    radiusInput.value = R.toFixed(1);
+    loadWeight.value = load.toFixed(1);
+    obsDist.value = (d === null) ? "" : d.toFixed(1);
+    obsHeight.value = (h === null) ? "" : h.toFixed(1);
+    boomIndexByCrane[best.key] = best.idx;
+    selectCrane(best.key, true);
+    if(best.jl > 0){ jibLen = best.jl; jibOff = best.jo; buildJibSeg(); calculate(); }
+
+    var c = CRANES[best.key];
+    autoNote.textContent = "吊り荷 " + load.toFixed(1) + "t・作業半径 " + R.toFixed(1) + "m" +
+      (h !== null ? "・障害物 " + (d !== null ? d.toFixed(1) + "m／" : "") + "高さ" + h.toFixed(1) + "m" : "") +
+      " の条件で、いちばん小さい " + c.label + "（ブーム " + boomLabelM(c, best.idx) + (best.jl > 0 ? "＋ジブ" + fj(best.jl) + "m・" + best.jo + "°" : "") + "）を選びました。" + obstacleToLiftDistanceText(R, d);
+    autoNote.style.display = "block";
+    showScreen("calc");
+  });
+  $("condBackBtn").addEventListener("click", function(){ showScreen("start"); });
+  $("condBtn").addEventListener("click", function(){ showScreen("cond"); });
+  $("backCondBtn").addEventListener("click", function(){ showScreen("cond"); });
+
+
+  /* ---------- 数字の入力をスライダーにする（入力欄は表示用。−／＋でも細かく調整できる） ---------- */
+  var SLIDERS = [];
+  function attachSlider(el, min, max, step, color){
+    var sl = document.createElement("input");
+    sl.type = "range"; sl.className = "num-slider";
+    sl.min = min; sl.max = max; sl.step = step; sl.value = 0;
+    var lab = el.closest(".field").querySelector("label");
+    sl.setAttribute("aria-label", lab ? lab.textContent : "");
+    sl.style.setProperty("--sl", color);
+    el.closest(".field").appendChild(sl);
+    sl.addEventListener("input", function(){
+      var v = parseFloat(sl.value);
+      el.value = (v <= 0) ? "" : v.toFixed(1);   // 0 は「なし（空欄）」
+      el.dispatchEvent(new Event("change"));      // 再計算を起動
+    });
+    SLIDERS.push({ el: el, sl: sl, max: parseFloat(max) });
+  }
+  function syncSliders(){
+    SLIDERS.forEach(function(o){
+      var v = parseFloat(o.el.value);
+      o.sl.value = isNaN(v) ? 0 : Math.min(v, o.max);
+    });
+  }
+  attachSlider($("condLoad"), 0, 80, 0.5, "#c9840a");
+  attachSlider($("condRadius"), 0, 50, 0.5, "#3a4048");
+  attachSlider($("condDist"), 0, 50, 0.5, "#0e9aa7");
+  attachSlider($("condHeight"), 0, 70, 0.5, "#8e44ad");
+  attachSlider($("radiusInput"), 0, 50, 0.5, "#3a4048");
+  attachSlider($("loadWeight"), 0, 80, 0.5, "#c9840a");
+  attachSlider($("obsDist"), 0, 50, 0.5, "#0e9aa7");
+  attachSlider($("obsHeight"), 0, 70, 0.5, "#8e44ad");
+
+  buildCraneTabs();
+  selectCrane(currentCrane, true);
+  showScreen("start");
+  syncSliders();
+})();
+</script>
+</body>
+</html>
